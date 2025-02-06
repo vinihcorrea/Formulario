@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Assinatura e Foto</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         /* Resetando margens e padding */
         * {
@@ -277,15 +278,13 @@
         const fotoPreview = document.getElementById('fotoPreview');
         const btnTirarFoto = document.getElementById('btnTirarFoto');
         const btnColetarAssinatura = document.getElementById('btnColetarAssinatura');
+        const whatsappSection = document.getElementById('whatsappSection');
+        const whatsappBtn = document.getElementById('whatsappBtn');
         const modalAssinatura = document.getElementById('modalAssinatura');
         const btnFecharModal = document.getElementById('btnFecharModal');
-        const whatsappBtn = document.getElementById('whatsappBtn');
+        const btnLimparAssinatura = document.getElementById('btnLimparAssinatura');
+        const btnConcluirAssinatura = document.getElementById('btnConcluirAssinatura');
         const loading = document.getElementById('loading');
-        const canvasAssinatura = document.getElementById('assinaturaCanvas');
-        const ctxAssinatura = canvasAssinatura.getContext('2d');
-        let isDrawing = false;
-        let lastX = 0;
-        let lastY = 0;
 
         // Função para iniciar a câmera
         function iniciarCamera() {
@@ -295,8 +294,10 @@
                         video.srcObject = stream;
                     })
                     .catch(function (error) {
-                        console.log("Erro ao acessar a câmera: ", error);
+                        alert('Erro ao acessar a câmera: ' + error.message);
                     });
+            } else {
+                alert('Acesso à câmera não suportado neste navegador');
             }
         }
 
@@ -304,23 +305,30 @@
         btnTirarFoto.addEventListener('click', function () {
             const ctx = canvasFoto.getContext('2d');
             ctx.drawImage(video, 0, 0, canvasFoto.width, canvasFoto.height);
-            fotoPreview.src = canvasFoto.toDataURL();
+            fotoPreview.src = canvasFoto.toDataURL('image/png');
             fotoPreview.style.display = 'block';
+            btnColetarAssinatura.style.display = 'block'; // Mostrar o botão de assinatura
         });
 
-        // Função para iniciar a assinatura
+        // Função para abrir modal de assinatura
         btnColetarAssinatura.addEventListener('click', function () {
             modalAssinatura.style.display = 'flex';
         });
 
-        // Função para desenhar a assinatura no canvas
-        canvasAssinatura.addEventListener('mousedown', function (e) {
+        // Inicializando o canvas para assinatura
+        const assinaturaCanvas = document.getElementById('assinaturaCanvas');
+        const ctxAssinatura = assinaturaCanvas.getContext('2d');
+        let isDrawing = false;
+        let lastX = 0;
+        let lastY = 0;
+
+        assinaturaCanvas.addEventListener('mousedown', function (e) {
             isDrawing = true;
             lastX = e.offsetX;
             lastY = e.offsetY;
         });
 
-        canvasAssinatura.addEventListener('mousemove', function (e) {
+        assinaturaCanvas.addEventListener('mousemove', function (e) {
             if (!isDrawing) return;
             ctxAssinatura.beginPath();
             ctxAssinatura.moveTo(lastX, lastY);
@@ -330,29 +338,38 @@
             lastY = e.offsetY;
         });
 
-        canvasAssinatura.addEventListener('mouseup', function () {
+        assinaturaCanvas.addEventListener('mouseup', function () {
             isDrawing = false;
         });
 
-        // Função para limpar a assinatura
+        // Limpar assinatura
         btnLimparAssinatura.addEventListener('click', function () {
-            ctxAssinatura.clearRect(0, 0, canvasAssinatura.width, canvasAssinatura.height);
+            ctxAssinatura.clearRect(0, 0, assinaturaCanvas.width, assinaturaCanvas.height);
         });
 
-        // Função para fechar o modal
+        // Concluir assinatura e gerar PDF
+        btnConcluirAssinatura.addEventListener('click', function () {
+            const assinaturaImagem = assinaturaCanvas.toDataURL();
+            modalAssinatura.style.display = 'none';
+            whatsappSection.style.display = 'block';
+
+            // Função para enviar via WhatsApp
+            whatsappBtn.addEventListener('click', function () {
+                const mensagem = `Nome: ${document.getElementById('nome').value}\nCPF: ${document.getElementById('cpf').value}\nExpositor: ${document.getElementById('expositor').value}\nRua: ${document.getElementById('rua').value}`;
+                const doc = new jsPDF();
+                doc.text(mensagem, 10, 10);
+                doc.addImage(assinaturaImagem, 'PNG', 10, 30, 180, 160);
+
+                // Salvar PDF
+                doc.save('formulario.pdf');
+                alert('Arquivo PDF gerado com sucesso!');
+            });
+        });
+
+        // Fechar modal de assinatura
         btnFecharModal.addEventListener('click', function () {
             modalAssinatura.style.display = 'none';
         });
-
-        // Função para enviar para o WhatsApp
-        whatsappBtn.addEventListener('click', function () {
-            const mensagem = "Olá, estou enviando meu formulário com a assinatura e foto!";
-            const url = `https://wa.me/?text=${encodeURIComponent(mensagem)}`;
-            window.open(url, '_blank');
-        });
-
-        // Iniciar a câmera automaticamente ao carregar a página
-        iniciarCamera();
     </script>
 </body>
 
