@@ -190,6 +190,14 @@ function enviarDados() {
         ip: "" // Campo para backend preencher com IP do usuário
     };
 
+    // Função para gerar a mensagem do WhatsApp
+    const gerarMensagem = () => {
+        // Verifica se os dados são válidos e cria a mensagem
+        const mensagem = `Dados do Formulário:\nNome: ${nome || 'Não informado'}\nCPF: ${cpf || 'Não informado'}\nExpositor: ${expositor || 'Não informado'}\nRua: ${rua || 'Não informado'}`;
+
+        return mensagem;
+    }
+
     // Envio para o backend
     fetch("/api/enviar", {
         method: "POST",
@@ -202,15 +210,24 @@ function enviarDados() {
         })
         .then(data => {
             console.log("Resposta do servidor:", data);
-            const mensagem = `Dados do Formulário:\nNome: ${nome}\nCPF: ${cpf}\nExpositor: ${expositor}\nRua: ${rua}`;
+
+            // Gerar a mensagem com os dados
+            const mensagem = gerarMensagem();
+
+            // Verifique o número do WhatsApp
             const numeroDestino = "5511980534827";
+
+            // Crie a URL para abrir o WhatsApp com a mensagem
             const url = `https://wa.me/${numeroDestino}?text=${encodeURIComponent(mensagem)}`;
+
+            // Abre o link em uma nova aba
             window.open(url, "_blank");
         })
         .catch(error => {
             console.error("Erro:", error);
             alert("Ocorreu um erro ao enviar os dados. Tente novamente.");
         });
+
 }
 
 // ----------- MELHORIAS ADICIONAIS -----------
