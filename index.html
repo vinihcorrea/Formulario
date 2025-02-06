@@ -200,7 +200,6 @@
         <!-- Seção para mostrar a foto tirada -->
         <div class="photo-container">
             <video id="video" autoplay></video>
-            <button id="btnCapturarFoto">Capturar Foto</button>
             <canvas id="canvasFoto" style="display: none;"></canvas>
             <img id="fotoPreview" class="foto-preview" />
         </div>
@@ -238,7 +237,6 @@
 
         const fotoPreview = document.getElementById('fotoPreview');
         const btnTirarFoto = document.getElementById('btnTirarFoto');
-        const btnCapturarFoto = document.getElementById('btnCapturarFoto');
         const video = document.getElementById('video');
         const canvasFoto = document.getElementById('canvasFoto');
 
@@ -270,14 +268,8 @@
         }
 
         // Função para capturar a foto
-        btnCapturarFoto.addEventListener('click', function () {
-            canvasFoto.width = video.videoWidth;
-            canvasFoto.height = video.videoHeight;
-            ctxFoto = canvasFoto.getContext('2d');
-            ctxFoto.drawImage(video, 0, 0, canvasFoto.width, canvasFoto.height);
-            fotoPreview.src = canvasFoto.toDataURL();
-            fotoPreview.style.display = "block";
-            document.getElementById('btnTirarFoto').disabled = true;
+        btnTirarFoto.addEventListener('click', function () {
+            iniciarCamera();
         });
 
         // Função para mostrar o modal de assinatura
@@ -320,8 +312,9 @@
             }
 
             // CPF
-            if (!cpfInput.value) {
-                document.getElementById('errorCpf').innerText = "CPF é obrigatório";
+            const cpf = cpfInput.value.replace(/\D/g, '');
+            if (!cpf || cpf.length !== 11) {
+                document.getElementById('errorCpf').innerText = "CPF inválido";
                 cpfInput.classList.add('input-error');
                 valid = false;
             } else {
@@ -329,15 +322,44 @@
                 cpfInput.classList.remove('input-error');
             }
 
+            // Expositor
+            if (!expositorInput.value) {
+                document.getElementById('errorExpositor').innerText = "Expositor é obrigatório";
+                expositorInput.classList.add('input-error');
+                valid = false;
+            } else {
+                document.getElementById('errorExpositor').innerText = "";
+                expositorInput.classList.remove('input-error');
+            }
+
+            // Rua
+            if (!ruaInput.value) {
+                document.getElementById('errorRua').innerText = "Rua é obrigatória";
+                ruaInput.classList.add('input-error');
+                valid = false;
+            } else {
+                document.getElementById('errorRua').innerText = "";
+                ruaInput.classList.remove('input-error');
+            }
+
             return valid;
         }
 
-        // Chamar a validação ao tentar enviar
-        btnCapturarFoto.addEventListener("click", function () {
-            if (validarCampos()) {
-                alert("Campos validados com sucesso!");
+        // Máscara de CPF
+        cpfInput.addEventListener('input', function () {
+            let value = cpfInput.value.replace(/\D/g, '');
+            if (value.length > 3 && value.length <= 6) {
+                value = value.replace(/(\d{3})(\d{1,3})/, '$1.$2');
+            } else if (value.length > 6 && value.length <= 9) {
+                value = value.replace(/(\d{3})(\d{3})(\d{1,3})/, '$1.$2.$3');
+            } else if (value.length > 9) {
+                value = value.replace(/(\d{3})(\d{3})(\d{3})(\d{1,2})/, '$1.$2.$3-$4');
             }
+            cpfInput.value = value;
         });
+
+        // Iniciar câmera automaticamente
+        window.onload = iniciarCamera;
     </script>
 </body>
 
