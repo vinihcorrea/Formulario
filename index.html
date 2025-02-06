@@ -7,15 +7,12 @@
     <title>Assinatura e Foto</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
-        /* Resetando margens e padding */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            border: 1px solid #ccc;
         }
 
-        /* Estilos gerais */
         body {
             font-family: 'Arial', sans-serif;
             background-color: #f7f7f7;
@@ -27,7 +24,6 @@
             color: #333;
         }
 
-        /* Container principal */
         .container {
             width: 100%;
             max-width: 480px;
@@ -40,7 +36,6 @@
             border: 1px solid #ddd;
         }
 
-        /* Cabeçalho */
         .header {
             width: 100%;
             background-color: #4CAF50;
@@ -57,7 +52,6 @@
             font-size: 24px;
         }
 
-        /* Estilo dos campos de entrada */
         input,
         button,
         #uploadFoto,
@@ -86,7 +80,6 @@
             border: 1px solid red;
         }
 
-        /* Estilo dos botões */
         button,
         .whatsapp-btn {
             background-color: #4CAF50;
@@ -101,7 +94,6 @@
             background-color: #45a049;
         }
 
-        /* Estilo para a foto */
         .foto-preview {
             width: 100%;
             height: 200px;
@@ -143,70 +135,29 @@
             background-color: #f0f0f0;
         }
 
-        /* Modal de Assinatura */
-        #modalAssinatura {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
+        .signature-container {
+            margin-top: 20px;
         }
 
-        #modalAssinatura .content {
-            background-color: white;
-            padding: 20px;
-            border-radius: 12px;
-            text-align: center;
-            width: 80%;
-            max-width: 450px;
-        }
-
-        #modalAssinatura canvas {
+        .signature-container canvas {
             width: 100%;
-            max-width: 400px;
             height: 200px;
-            border: 1px solid #ddd;
+            border: 1px solid #ccc;
+            background-color: #f9f9f9;
         }
 
-        /* Indicador de carregamento */
-        #loading {
-            display: none;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 20px;
-            color: #4CAF50;
+        .signature-container button {
+            width: 48%;
+            margin-top: 10px;
+            display: inline-block;
         }
 
-        /* Erro nos campos */
         .error-message {
             color: red;
             font-size: 12px;
             margin-top: 5px;
         }
 
-        /* Melhorando o visual de botões */
-        .btn-rounded {
-            border-radius: 10px;
-            background-color: #007BFF;
-            color: white;
-            padding: 12px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: background-color 0.3s ease;
-        }
-
-        .btn-rounded:hover {
-            background-color: #0056b3;
-        }
-
-        /* Estilo do botão de cancelar */
         .btn-cancel {
             background-color: #dc3545;
             color: white;
@@ -219,6 +170,16 @@
 
         .btn-cancel:hover {
             background-color: #c82333;
+        }
+
+        .loading {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 20px;
+            color: #4CAF50;
         }
     </style>
 </head>
@@ -239,7 +200,7 @@
         <div class="error-message" id="errorRua"></div>
 
         <!-- Botão para tirar foto -->
-        <button id="btnTirarFoto" class="btn-rounded">Tirar Foto</button>
+        <button id="btnTirarFoto">Tirar Foto</button>
 
         <!-- Seção para mostrar a foto tirada -->
         <div class="photo-container">
@@ -248,32 +209,27 @@
             <img id="fotoPreview" class="foto-preview" />
         </div>
 
-        <button id="btnColetarAssinatura" class="btn-rounded">Coletar Assinatura</button>
+        <!-- Assinatura -->
+        <div class="signature-container">
+            <h3>Assine abaixo</h3>
+            <canvas id="assinaturaCanvas" width="400" height="200"></canvas>
+            <div>
+                <button id="btnConcluirAssinatura" class="btn-rounded">Concluir</button>
+                <button id="btnLimparAssinatura" class="btn-cancel">Limpar</button>
+            </div>
+        </div>
 
         <!-- Botão de Enviar para WhatsApp -->
         <div id="whatsappSection" style="display: none; margin-top: 20px;">
             <a href="#" id="whatsappBtn" class="whatsapp-btn">Enviar para WhatsApp</a>
         </div>
 
-        <div id="loading">Enviando...</div>
-    </div>
-
-    <!-- Modal de Assinatura -->
-    <div id="modalAssinatura">
-        <div class="content">
-            <h3>Assine abaixo</h3>
-            <canvas id="assinaturaCanvas" width="400" height="200"></canvas>
-            <br>
-            <button id="btnConcluirAssinatura" class="btn-rounded">Concluir</button>
-            <button id="btnLimparAssinatura" class="btn-cancel">Limpar</button>
-            <button id="btnFecharModal" class="btn-cancel">Fechar</button>
-        </div>
+        <div id="loading" class="loading">Enviando...</div>
     </div>
 
     <script>
         // Funções de JavaScript para manipulação do formulário, foto e assinatura
 
-        // Pegando elementos
         const video = document.getElementById('video');
         const canvasFoto = document.getElementById('canvasFoto');
         const fotoPreview = document.getElementById('fotoPreview');
@@ -281,16 +237,12 @@
         const btnColetarAssinatura = document.getElementById('btnColetarAssinatura');
         const whatsappSection = document.getElementById('whatsappSection');
         const whatsappBtn = document.getElementById('whatsappBtn');
-        const modalAssinatura = document.getElementById('modalAssinatura');
-        const btnFecharModal = document.getElementById('btnFecharModal');
-        const btnLimparAssinatura = document.getElementById('btnLimparAssinatura');
-        const btnConcluirAssinatura = document.getElementById('btnConcluirAssinatura');
         const loading = document.getElementById('loading');
 
-        // Função para iniciar a câmera
+        // Iniciar a câmera
         function iniciarCamera() {
             if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-                navigator.mediaDevices.getUserMedia({ video: true })
+                navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: 1280, height: 720 } })
                     .then(function (stream) {
                         video.srcObject = stream;
                     })
@@ -309,66 +261,49 @@
         });
 
         // Coletar assinatura
-        btnColetarAssinatura.addEventListener('click', function () {
-            modalAssinatura.style.display = 'flex';
-            const assinaturaCanvas = document.getElementById('assinaturaCanvas');
-            const contextoAssinatura = assinaturaCanvas.getContext('2d');
-            let isDrawing = false;
+        const assinaturaCanvas = document.getElementById('assinaturaCanvas');
+        const contextoAssinatura = assinaturaCanvas.getContext('2d');
+        let isDrawing = false;
 
-            // Começando o desenho
-            assinaturaCanvas.addEventListener('mousedown', (e) => {
-                isDrawing = true;
-                contextoAssinatura.moveTo(e.offsetX, e.offsetY);
-            });
-
-            // Desenhando no canvas
-            assinaturaCanvas.addEventListener('mousemove', (e) => {
-                if (isDrawing) {
-                    contextoAssinatura.lineTo(e.offsetX, e.offsetY);
-                    contextoAssinatura.stroke();
-                }
-            });
-
-            // Parando o desenho
-            assinaturaCanvas.addEventListener('mouseup', () => {
-                isDrawing = false;
-            });
+        assinaturaCanvas.addEventListener('mousedown', (e) => {
+            isDrawing = true;
+            contextoAssinatura.moveTo(e.offsetX, e.offsetY);
         });
 
-        // Concluir assinatura
-        btnConcluirAssinatura.addEventListener('click', function () {
-            modalAssinatura.style.display = 'none';
-            whatsappSection.style.display = 'block';
+        assinaturaCanvas.addEventListener('mousemove', (e) => {
+            if (isDrawing) {
+                contextoAssinatura.lineTo(e.offsetX, e.offsetY);
+                contextoAssinatura.stroke();
+            }
+        });
+
+        assinaturaCanvas.addEventListener('mouseup', () => {
+            isDrawing = false;
         });
 
         // Limpar assinatura
-        btnLimparAssinatura.addEventListener('click', function () {
-            const assinaturaCanvas = document.getElementById('assinaturaCanvas');
-            const contextoAssinatura = assinaturaCanvas.getContext('2d');
+        document.getElementById('btnLimparAssinatura').addEventListener('click', function () {
             contextoAssinatura.clearRect(0, 0, assinaturaCanvas.width, assinaturaCanvas.height);
         });
 
-        // Fechar modal
-        btnFecharModal.addEventListener('click', function () {
-            modalAssinatura.style.display = 'none';
+        // Concluir assinatura
+        document.getElementById('btnConcluirAssinatura').addEventListener('click', function () {
+            whatsappSection.style.display = 'block';
         });
 
         // Enviar para WhatsApp
         whatsappBtn.addEventListener('click', function () {
             const fotoUrl = fotoPreview.src;
-            const assinaturaUrl = document.getElementById('assinaturaCanvas').toDataURL();
-            loading.style.display = 'block';
+            const assinaturaUrl = assinaturaCanvas.toDataURL();
 
-            // Emulação de envio
-            setTimeout(() => {
-                loading.style.display = 'none';
-                alert("Foto e assinatura enviadas para o WhatsApp!");
-            }, 2000);
+            const message = `Foto: ${fotoUrl}\nAssinatura: ${assinaturaUrl}`;
+            const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+            window.open(whatsappUrl, '_blank');
         });
 
-        // Iniciar câmera
         iniciarCamera();
     </script>
+
 </body>
 
 </html>
