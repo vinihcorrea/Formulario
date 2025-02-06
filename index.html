@@ -275,27 +275,6 @@
             btnTirarOutraFoto.style.display = 'inline-block';
         });
 
-        // Prevenir a rolagem da página ao assinar
-        assinaturaCanvas.addEventListener('touchstart', (e) => {
-            e.preventDefault(); // Impede que a página role
-            isDrawing = true;
-            const rect = assinaturaCanvas.getBoundingClientRect();
-            contextoAssinatura.moveTo(e.touches[0].clientX - rect.left, e.touches[0].clientY - rect.top);
-});
-
-assinaturaCanvas.addEventListener('touchmove', (e) => {
-    e.preventDefault(); // Impede que a página role
-    if (isDrawing) {
-        const rect = assinaturaCanvas.getBoundingClientRect();
-        contextoAssinatura.lineTo(e.touches[0].clientX - rect.left, e.touches[0].clientY - rect.top);
-        contextoAssinatura.stroke();
-    }
-});
-
-assinaturaCanvas.addEventListener('touchend', () => {
-    isDrawing = false;
-});
-
         // Cancelar foto
         btnCancelarFoto.addEventListener('click', function () {
             fotoPreview.style.display = 'none';
