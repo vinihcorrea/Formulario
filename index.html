@@ -239,12 +239,11 @@
         const btnTirarFoto = document.getElementById('btnTirarFoto');
         const btnCancelarFoto = document.getElementById('btnCancelarFoto');
         const btnTirarOutraFoto = document.getElementById('btnTirarOutraFoto');
-        const btnColetarAssinatura = document.getElementById('btnColetarAssinatura');
         const whatsappSection = document.getElementById('whatsappSection');
         const whatsappBtn = document.getElementById('whatsappBtn');
         const loading = document.getElementById('loading');
 
-        // Iniciar a câmera
+        // Função para iniciar a câmera
         function iniciarCamera() {
             if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
                 navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: 1280, height: 720 } })
@@ -287,7 +286,7 @@
             btnTirarOutraFoto.style.display = 'none';
         });
 
-        // Coletar assinatura
+        // Concluir assinatura
         const assinaturaCanvas = document.getElementById('assinaturaCanvas');
         const contextoAssinatura = assinaturaCanvas.getContext('2d');
         let isDrawing = false;
@@ -308,24 +307,25 @@
             isDrawing = false;
         });
 
+        assinaturaCanvas.addEventListener('mouseout', () => {
+            isDrawing = false;
+        });
+
         // Limpar assinatura
-        document.getElementById('btnLimparAssinatura').addEventListener('click', function () {
+        const btnLimparAssinatura = document.getElementById('btnLimparAssinatura');
+        btnLimparAssinatura.addEventListener('click', function () {
             contextoAssinatura.clearRect(0, 0, assinaturaCanvas.width, assinaturaCanvas.height);
         });
 
-        // Concluir assinatura
-        document.getElementById('btnConcluirAssinatura').addEventListener('click', function () {
-            whatsappSection.style.display = 'block';
-        });
-
-        // Enviar para WhatsApp
+        // Função de envio para o WhatsApp
         whatsappBtn.addEventListener('click', function () {
-            const fotoUrl = fotoPreview.src;
-            const assinaturaUrl = assinaturaCanvas.toDataURL();
+            loading.style.display = 'block';
 
-            const message = `Foto: ${fotoUrl}\nAssinatura: ${assinaturaUrl}`;
-            const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
-            window.open(whatsappUrl, '_blank');
+            // Simulando envio
+            setTimeout(function () {
+                loading.style.display = 'none';
+                alert('Mensagem enviada com sucesso!');
+            }, 2000);
         });
 
         iniciarCamera();
