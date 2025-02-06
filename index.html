@@ -12,6 +12,7 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            border: 1px solid #ccc;
         }
 
         /* Estilos gerais */
@@ -294,82 +295,79 @@
                         video.srcObject = stream;
                     })
                     .catch(function (error) {
-                        alert('Erro ao acessar a câmera: ' + error.message);
+                        console.error("Erro ao acessar a câmera: ", error);
                     });
-            } else {
-                alert('Acesso à câmera não suportado neste navegador');
             }
         }
 
-        // Função para tirar foto
+        // Tirar foto
         btnTirarFoto.addEventListener('click', function () {
-            const ctx = canvasFoto.getContext('2d');
-            ctx.drawImage(video, 0, 0, canvasFoto.width, canvasFoto.height);
+            const contexto = canvasFoto.getContext('2d');
+            contexto.drawImage(video, 0, 0, canvasFoto.width, canvasFoto.height);
             fotoPreview.src = canvasFoto.toDataURL('image/png');
             fotoPreview.style.display = 'block';
-            btnColetarAssinatura.style.display = 'block'; // Mostrar o botão de assinatura
         });
 
-        // Função para abrir modal de assinatura
+        // Coletar assinatura
         btnColetarAssinatura.addEventListener('click', function () {
             modalAssinatura.style.display = 'flex';
+            const assinaturaCanvas = document.getElementById('assinaturaCanvas');
+            const contextoAssinatura = assinaturaCanvas.getContext('2d');
+            let isDrawing = false;
+
+            // Começando o desenho
+            assinaturaCanvas.addEventListener('mousedown', (e) => {
+                isDrawing = true;
+                contextoAssinatura.moveTo(e.offsetX, e.offsetY);
+            });
+
+            // Desenhando no canvas
+            assinaturaCanvas.addEventListener('mousemove', (e) => {
+                if (isDrawing) {
+                    contextoAssinatura.lineTo(e.offsetX, e.offsetY);
+                    contextoAssinatura.stroke();
+                }
+            });
+
+            // Parando o desenho
+            assinaturaCanvas.addEventListener('mouseup', () => {
+                isDrawing = false;
+            });
         });
 
-        // Inicializando o canvas para assinatura
-        const assinaturaCanvas = document.getElementById('assinaturaCanvas');
-        const ctxAssinatura = assinaturaCanvas.getContext('2d');
-        let isDrawing = false;
-        let lastX = 0;
-        let lastY = 0;
-
-        assinaturaCanvas.addEventListener('mousedown', function (e) {
-            isDrawing = true;
-            lastX = e.offsetX;
-            lastY = e.offsetY;
-        });
-
-        assinaturaCanvas.addEventListener('mousemove', function (e) {
-            if (!isDrawing) return;
-            ctxAssinatura.beginPath();
-            ctxAssinatura.moveTo(lastX, lastY);
-            ctxAssinatura.lineTo(e.offsetX, e.offsetY);
-            ctxAssinatura.stroke();
-            lastX = e.offsetX;
-            lastY = e.offsetY;
-        });
-
-        assinaturaCanvas.addEventListener('mouseup', function () {
-            isDrawing = false;
+        // Concluir assinatura
+        btnConcluirAssinatura.addEventListener('click', function () {
+            modalAssinatura.style.display = 'none';
+            whatsappSection.style.display = 'block';
         });
 
         // Limpar assinatura
         btnLimparAssinatura.addEventListener('click', function () {
-            ctxAssinatura.clearRect(0, 0, assinaturaCanvas.width, assinaturaCanvas.height);
+            const assinaturaCanvas = document.getElementById('assinaturaCanvas');
+            const contextoAssinatura = assinaturaCanvas.getContext('2d');
+            contextoAssinatura.clearRect(0, 0, assinaturaCanvas.width, assinaturaCanvas.height);
         });
 
-        // Concluir assinatura e gerar PDF
-        btnConcluirAssinatura.addEventListener('click', function () {
-            const assinaturaImagem = assinaturaCanvas.toDataURL();
-            modalAssinatura.style.display = 'none';
-            whatsappSection.style.display = 'block';
-
-            // Função para enviar via WhatsApp
-            whatsappBtn.addEventListener('click', function () {
-                const mensagem = `Nome: ${document.getElementById('nome').value}\nCPF: ${document.getElementById('cpf').value}\nExpositor: ${document.getElementById('expositor').value}\nRua: ${document.getElementById('rua').value}`;
-                const doc = new jsPDF();
-                doc.text(mensagem, 10, 10);
-                doc.addImage(assinaturaImagem, 'PNG', 10, 30, 180, 160);
-
-                // Salvar PDF
-                doc.save('formulario.pdf');
-                alert('Arquivo PDF gerado com sucesso!');
-            });
-        });
-
-        // Fechar modal de assinatura
+        // Fechar modal
         btnFecharModal.addEventListener('click', function () {
             modalAssinatura.style.display = 'none';
         });
+
+        // Enviar para WhatsApp
+        whatsappBtn.addEventListener('click', function () {
+            const fotoUrl = fotoPreview.src;
+            const assinaturaUrl = document.getElementById('assinaturaCanvas').toDataURL();
+            loading.style.display = 'block';
+
+            // Emulação de envio
+            setTimeout(() => {
+                loading.style.display = 'none';
+                alert("Foto e assinatura enviadas para o WhatsApp!");
+            }, 2000);
+        });
+
+        // Iniciar câmera
+        iniciarCamera();
     </script>
 </body>
 
