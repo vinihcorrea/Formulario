@@ -23,13 +23,12 @@
             height: 100vh;
             margin: 0;
             color: #333;
-            border: 1px solid #ddd;
         }
 
         /* Container principal */
         .container {
             width: 100%;
-            max-width: 400px;
+            max-width: 480px;
             padding: 30px;
             background-color: #fff;
             border-radius: 12px;
@@ -61,6 +60,7 @@
         button,
         #uploadFoto,
         #btnTirarFoto,
+        #btnColetarAssinatura,
         .whatsapp-btn {
             width: 100%;
             padding: 14px;
@@ -77,6 +77,11 @@
         #btnTirarFoto:focus {
             border: 1px solid #4CAF50;
             outline: none;
+        }
+
+        input.error,
+        button.error {
+            border: 1px solid red;
         }
 
         /* Estilo dos botões */
@@ -178,10 +183,6 @@
         }
 
         /* Erro nos campos */
-        .input-error {
-            border: 1px solid red;
-        }
-
         .error-message {
             color: red;
             font-size: 12px;
@@ -226,13 +227,13 @@
         <div class="header">Assinatura e Foto</div>
 
         <h1>Formulário</h1>
-        <input type="text" id="nome" placeholder="Nome" required>
+        <input type="text" id="nome" placeholder="Nome" required aria-label="Digite seu nome">
         <div class="error-message" id="errorNome"></div>
-        <input type="text" id="cpf" placeholder="CPF" required>
+        <input type="text" id="cpf" placeholder="CPF" required aria-label="Digite seu CPF">
         <div class="error-message" id="errorCpf"></div>
-        <input type="text" id="expositor" placeholder="Expositor" required>
+        <input type="text" id="expositor" placeholder="Expositor" required aria-label="Digite o nome do expositor">
         <div class="error-message" id="errorExpositor"></div>
-        <input type="text" id="rua" placeholder="Rua" required>
+        <input type="text" id="rua" placeholder="Rua" required aria-label="Digite o nome da rua">
         <div class="error-message" id="errorRua"></div>
 
         <!-- Botão para tirar foto -->
@@ -270,103 +271,89 @@
     <script>
         // Funções de JavaScript para manipulação do formulário, foto e assinatura
 
-        // Pegando elementos do DOM
-        const nomeInput = document.getElementById('nome');
-        const cpfInput = document.getElementById('cpf');
-        const expositorInput = document.getElementById('expositor');
-        const ruaInput = document.getElementById('rua');
-
-        const fotoPreview = document.getElementById('fotoPreview');
-        const btnTirarFoto = document.getElementById('btnTirarFoto');
+        // Pegando elementos
         const video = document.getElementById('video');
         const canvasFoto = document.getElementById('canvasFoto');
-
+        const fotoPreview = document.getElementById('fotoPreview');
+        const btnTirarFoto = document.getElementById('btnTirarFoto');
         const btnColetarAssinatura = document.getElementById('btnColetarAssinatura');
         const modalAssinatura = document.getElementById('modalAssinatura');
-        const btnConcluirAssinatura = document.getElementById('btnConcluirAssinatura');
         const btnFecharModal = document.getElementById('btnFecharModal');
-        const btnLimparAssinatura = document.getElementById('btnLimparAssinatura');
-
-        const whatsappSection = document.getElementById('whatsappSection');
         const whatsappBtn = document.getElementById('whatsappBtn');
         const loading = document.getElementById('loading');
-
-        // Variáveis de assinatura
-        let ctxAssinatura = document.getElementById('assinaturaCanvas').getContext('2d');
+        const canvasAssinatura = document.getElementById('assinaturaCanvas');
+        const ctxAssinatura = canvasAssinatura.getContext('2d');
         let isDrawing = false;
         let lastX = 0;
         let lastY = 0;
 
         // Função para iniciar a câmera
         function iniciarCamera() {
-            navigator.mediaDevices.getUserMedia({ video: true })
-                .then(function (stream) {
-                    video.srcObject = stream;
-                })
-                .catch(function (err) {
-                    console.error("Erro ao acessar a câmera: ", err);
-                });
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                navigator.mediaDevices.getUserMedia({ video: true })
+                    .then(function (stream) {
+                        video.srcObject = stream;
+                    })
+                    .catch(function (error) {
+                        console.log("Erro ao acessar a câmera: ", error);
+                    });
+            }
         }
 
-        // Função para capturar a foto
+        // Função para tirar foto
         btnTirarFoto.addEventListener('click', function () {
-            canvasFoto.width = video.videoWidth;
-            canvasFoto.height = video.videoHeight;
-            canvasFoto.getContext('2d').drawImage(video, 0, 0);
+            const ctx = canvasFoto.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvasFoto.width, canvasFoto.height);
+            fotoPreview.src = canvasFoto.toDataURL();
             fotoPreview.style.display = 'block';
-            fotoPreview.src = canvasFoto.toDataURL('image/png');
         });
 
-        // Abrir modal de assinatura
+        // Função para iniciar a assinatura
         btnColetarAssinatura.addEventListener('click', function () {
             modalAssinatura.style.display = 'flex';
         });
 
-        // Fechar o modal de assinatura
-        btnFecharModal.addEventListener('click', function () {
-            modalAssinatura.style.display = 'none';
-        });
-
-        // Iniciar o desenho no canvas
-        assinaturaCanvas.addEventListener('mousedown', function (e) {
+        // Função para desenhar a assinatura no canvas
+        canvasAssinatura.addEventListener('mousedown', function (e) {
             isDrawing = true;
             lastX = e.offsetX;
             lastY = e.offsetY;
         });
 
-        // Desenhando no canvas
-        assinaturaCanvas.addEventListener('mousemove', function (e) {
+        canvasAssinatura.addEventListener('mousemove', function (e) {
             if (!isDrawing) return;
-            let x = e.offsetX;
-            let y = e.offsetY;
             ctxAssinatura.beginPath();
             ctxAssinatura.moveTo(lastX, lastY);
-            ctxAssinatura.lineTo(x, y);
+            ctxAssinatura.lineTo(e.offsetX, e.offsetY);
             ctxAssinatura.stroke();
-            lastX = x;
-            lastY = y;
+            lastX = e.offsetX;
+            lastY = e.offsetY;
         });
 
-        // Parar o desenho
-        assinaturaCanvas.addEventListener('mouseup', function () {
+        canvasAssinatura.addEventListener('mouseup', function () {
             isDrawing = false;
         });
 
-        // Limpar a assinatura
+        // Função para limpar a assinatura
         btnLimparAssinatura.addEventListener('click', function () {
-            ctxAssinatura.clearRect(0, 0, assinaturaCanvas.width, assinaturaCanvas.height);
+            ctxAssinatura.clearRect(0, 0, canvasAssinatura.width, canvasAssinatura.height);
         });
 
-        // Concluir a assinatura
-        btnConcluirAssinatura.addEventListener('click', function () {
+        // Função para fechar o modal
+        btnFecharModal.addEventListener('click', function () {
             modalAssinatura.style.display = 'none';
-            whatsappSection.style.display = 'block';
         });
 
-        // Iniciar a câmera ao carregar a página
-        window.onload = iniciarCamera;
-    </script>
+        // Função para enviar para o WhatsApp
+        whatsappBtn.addEventListener('click', function () {
+            const mensagem = "Olá, estou enviando meu formulário com a assinatura e foto!";
+            const url = `https://wa.me/?text=${encodeURIComponent(mensagem)}`;
+            window.open(url, '_blank');
+        });
 
+        // Iniciar a câmera automaticamente ao carregar a página
+        iniciarCamera();
+    </script>
 </body>
 
 </html>
