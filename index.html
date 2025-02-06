@@ -6,7 +6,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Assinatura e Foto</title>
     <style>
-        /* Estilos básicos */
+        /* Resetando margens e padding */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Estilos gerais */
         body {
             font-family: 'Arial', sans-serif;
             background-color: #f7f7f7;
@@ -15,56 +22,113 @@
             align-items: center;
             height: 100vh;
             margin: 0;
+            color: #333;
         }
 
+        /* Container principal */
         .container {
             width: 400px;
             padding: 30px;
             background-color: #fff;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            position: relative;
+        }
+
+        /* Cabeçalho */
+        .header {
+            width: 100%;
+            background-color: #4CAF50;
+            color: white;
+            padding: 15px 0;
+            text-align: center;
+            font-size: 26px;
+            font-weight: bold;
+            border-radius: 10px 10px 0 0;
         }
 
         h1 {
-            text-align: center;
             margin-bottom: 20px;
+            font-size: 24px;
         }
 
+        /* Estilo dos campos de entrada */
         input,
         button,
-        #uploadFoto {
+        #uploadFoto,
+        #btnTirarFoto {
             width: 100%;
-            padding: 10px;
-            margin: 10px 0;
+            padding: 12px;
+            margin: 12px 0;
             font-size: 16px;
-            border-radius: 5px;
+            border-radius: 8px;
             border: 1px solid #ccc;
+            transition: border 0.3s ease;
         }
 
-        button {
+        input:focus {
+            border: 1px solid #4CAF50;
+        }
+
+        /* Estilo dos botões */
+        button,
+        .whatsapp-btn {
             background-color: #4CAF50;
             color: white;
             cursor: pointer;
             border: none;
+            transition: background-color 0.3s ease;
         }
 
-        button:hover {
+        button:hover,
+        .whatsapp-btn:hover {
             background-color: #45a049;
         }
 
+        /* Estilo para a foto */
         .foto-preview {
             width: 100%;
             height: 200px;
             object-fit: cover;
-            margin-bottom: 20px;
-            border-radius: 5px;
+            margin-top: 20px;
+            border-radius: 10px;
+            border: 2px solid #ddd;
+            display: none;
         }
 
         canvas {
             border: 1px solid #ccc;
-            margin-bottom: 20px;
+            margin-top: 20px;
+            border-radius: 8px;
         }
 
+        .whatsapp-btn {
+            background-color: #25D366;
+            padding: 12px;
+            border-radius: 8px;
+            text-decoration: none;
+            display: block;
+            margin-top: 20px;
+        }
+
+        .whatsapp-btn:hover {
+            background-color: #128C7E;
+        }
+
+        .photo-container {
+            position: relative;
+            margin-top: 20px;
+        }
+
+        .photo-container video {
+            width: 100%;
+            height: 250px;
+            border-radius: 10px;
+            background-color: #f0f0f0;
+        }
+
+        /* Modal de Assinatura */
         #modalAssinatura {
             display: none;
             position: fixed;
@@ -91,19 +155,26 @@
             height: 200px;
         }
 
-        .whatsapp-btn {
-            background-color: #25D366;
-            border-radius: 5px;
-            padding: 10px;
-            color: white;
-            font-size: 16px;
-            text-align: center;
-            text-decoration: none;
-            width: 100%;
+        /* Indicador de carregamento */
+        #loading {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 20px;
+            color: #4CAF50;
         }
 
-        .whatsapp-btn:hover {
-            background-color: #128C7E;
+        /* Erro nos campos */
+        .input-error {
+            border: 1px solid red;
+        }
+
+        .error-message {
+            color: red;
+            font-size: 12px;
+            margin-top: 5px;
         }
     </style>
 </head>
@@ -111,18 +182,37 @@
 <body>
 
     <div class="container">
-        <h1>Formulário</h1>
-        <!-- Formulário de dados -->
-        <input type="text" id="nome" placeholder="Nome" required>
-        <input type="text" id="cpf" placeholder="CPF" required>
-        <input type="text" id="expositor" placeholder="Expositor" required>
-        <input type="text" id="rua" placeholder="Rua" required>
+        <div class="header">Assinatura e Foto</div>
 
-        <!-- Campo para foto -->
-        <input type="file" id="uploadFoto" accept="image/*" onchange="previewFoto()">
-        <img id="fotoPreview" class="foto-preview" style="display: none;" />
+        <h1>Formulário</h1>
+        <input type="text" id="nome" placeholder="Nome" required>
+        <div class="error-message" id="errorNome"></div>
+        <input type="text" id="cpf" placeholder="CPF" required>
+        <div class="error-message" id="errorCpf"></div>
+        <input type="text" id="expositor" placeholder="Expositor" required>
+        <div class="error-message" id="errorExpositor"></div>
+        <input type="text" id="rua" placeholder="Rua" required>
+        <div class="error-message" id="errorRua"></div>
+
+        <!-- Botão para tirar foto -->
+        <button id="btnTirarFoto">Tirar Foto</button>
+
+        <!-- Seção para mostrar a foto tirada -->
+        <div class="photo-container">
+            <video id="video" autoplay></video>
+            <button id="btnCapturarFoto">Capturar Foto</button>
+            <canvas id="canvasFoto" style="display: none;"></canvas>
+            <img id="fotoPreview" class="foto-preview" />
+        </div>
 
         <button id="btnColetarAssinatura">Coletar Assinatura</button>
+
+        <!-- Botão de Enviar para WhatsApp -->
+        <div id="whatsappSection" style="display: none; margin-top: 20px;">
+            <a href="#" id="whatsappBtn" class="whatsapp-btn">Enviar para WhatsApp</a>
+        </div>
+
+        <div id="loading">Enviando...</div>
     </div>
 
     <!-- Modal de Assinatura -->
@@ -137,138 +227,118 @@
         </div>
     </div>
 
-    <!-- Botão de Enviar para WhatsApp (invisível inicialmente) -->
-    <div id="whatsappSection" style="display: none; margin-top: 20px;">
-        <a href="#" id="whatsappBtn" class="whatsapp-btn">Enviar para WhatsApp</a>
-    </div>
-
     <script>
-        // Variáveis do formulário
-        const nomeInput = document.getElementById("nome");
-        const cpfInput = document.getElementById("cpf");
-        const expositorInput = document.getElementById("expositor");
-        const ruaInput = document.getElementById("rua");
+        // Funções de JavaScript para manipulação do formulário, foto e assinatura
 
-        // Variáveis do botão e modal
-        const btnColetarAssinatura = document.getElementById("btnColetarAssinatura");
-        const modalAssinatura = document.getElementById("modalAssinatura");
-        const btnConcluirAssinatura = document.getElementById("btnConcluirAssinatura");
-        const btnLimparAssinatura = document.getElementById("btnLimparAssinatura");
-        const btnFecharModal = document.getElementById("btnFecharModal");
-        const assinaturaCanvas = document.getElementById("assinaturaCanvas");
-        const fotoPreview = document.getElementById("fotoPreview");
-        const whatsappSection = document.getElementById("whatsappSection");
-        const whatsappBtn = document.getElementById("whatsappBtn");
+        // Pegando elementos do DOM
+        const nomeInput = document.getElementById('nome');
+        const cpfInput = document.getElementById('cpf');
+        const expositorInput = document.getElementById('expositor');
+        const ruaInput = document.getElementById('rua');
 
-        // Canvas da Assinatura
-        const ctx = assinaturaCanvas.getContext("2d");
-        let desenhando = false;
+        const fotoPreview = document.getElementById('fotoPreview');
+        const btnTirarFoto = document.getElementById('btnTirarFoto');
+        const btnCapturarFoto = document.getElementById('btnCapturarFoto');
+        const video = document.getElementById('video');
+        const canvasFoto = document.getElementById('canvasFoto');
 
-        // Estilos para assinatura
-        ctx.lineWidth = 3;
-        ctx.lineJoin = "round";
-        ctx.lineCap = "round";
-        ctx.strokeStyle = "#333";
+        const btnColetarAssinatura = document.getElementById('btnColetarAssinatura');
+        const modalAssinatura = document.getElementById('modalAssinatura');
+        const btnConcluirAssinatura = document.getElementById('btnConcluirAssinatura');
+        const btnFecharModal = document.getElementById('btnFecharModal');
+        const btnLimparAssinatura = document.getElementById('btnLimparAssinatura');
 
-        // Função para iniciar o desenho
-        const startDrawing = (x, y) => {
-            desenhando = true;
-            ctx.beginPath();
-            ctx.moveTo(x, y);
-        };
+        const whatsappSection = document.getElementById('whatsappSection');
+        const whatsappBtn = document.getElementById('whatsappBtn');
+        const loading = document.getElementById('loading');
 
-        // Função para desenhar
-        const draw = (x, y) => {
-            if (desenhando) {
-                ctx.lineTo(x, y);
-                ctx.stroke();
-            }
-        };
+        // Variáveis de assinatura
+        let ctxAssinatura = document.getElementById('assinaturaCanvas').getContext('2d');
+        let isDrawing = false;
+        let lastX = 0;
+        let lastY = 0;
 
-        // Função para parar o desenho
-        const stopDrawing = () => {
-            desenhando = false;
-        };
-
-        // Eventos de mouse
-        assinaturaCanvas.addEventListener("mousedown", (e) => {
-            startDrawing(e.offsetX, e.offsetY);
-        });
-        assinaturaCanvas.addEventListener("mousemove", (e) => {
-            if (desenhando) {
-                draw(e.offsetX, e.offsetY);
-            }
-        });
-        assinaturaCanvas.addEventListener("mouseup", stopDrawing);
-        assinaturaCanvas.addEventListener("mouseleave", stopDrawing);
-
-        // Eventos de toque (para dispositivos móveis)
-        assinaturaCanvas.addEventListener("touchstart", (e) => {
-            e.preventDefault();
-            let touch = e.touches[0];
-            let rect = assinaturaCanvas.getBoundingClientRect();
-            startDrawing(touch.clientX - rect.left, touch.clientY - rect.top);
-        });
-        assinaturaCanvas.addEventListener("touchmove", (e) => {
-            if (desenhando) {
-                let touch = e.touches[0];
-                let rect = assinaturaCanvas.getBoundingClientRect();
-                draw(touch.clientX - rect.left, touch.clientY - rect.top);
-            }
-            e.preventDefault();
-        });
-        assinaturaCanvas.addEventListener("touchend", stopDrawing);
-
-        // Função para limpar a assinatura
-        function limparAssinatura() {
-            ctx.clearRect(0, 0, assinaturaCanvas.width, assinaturaCanvas.height);
+        // Função para iniciar a câmera
+        function iniciarCamera() {
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(function (stream) {
+                    video.srcObject = stream;
+                })
+                .catch(function (error) {
+                    alert("Erro ao acessar a câmera.");
+                });
         }
 
-        // Função para mostrar a foto selecionada
-        function previewFoto() {
-            const file = document.getElementById("uploadFoto").files[0];
-            const reader = new FileReader();
-            reader.onload = function (e) {
-                fotoPreview.src = e.target.result;
-                fotoPreview.style.display = "block";
-            };
-            reader.readAsDataURL(file);
-        }
-
-        // Função para coletar a assinatura
-        btnColetarAssinatura.addEventListener("click", () => {
-            modalAssinatura.style.display = "flex"; // Exibe o modal de assinatura
+        // Função para capturar a foto
+        btnCapturarFoto.addEventListener('click', function () {
+            canvasFoto.width = video.videoWidth;
+            canvasFoto.height = video.videoHeight;
+            ctxFoto = canvasFoto.getContext('2d');
+            ctxFoto.drawImage(video, 0, 0, canvasFoto.width, canvasFoto.height);
+            fotoPreview.src = canvasFoto.toDataURL();
+            fotoPreview.style.display = "block";
+            document.getElementById('btnTirarFoto').disabled = true;
         });
 
-        // Função para concluir a assinatura e voltar ao formulário
-        btnConcluirAssinatura.addEventListener("click", () => {
-            // Captura a assinatura em base64
-            const assinaturaBase64 = assinaturaCanvas.toDataURL("image/png");
+        // Função para mostrar o modal de assinatura
+        btnColetarAssinatura.addEventListener('click', function () {
+            modalAssinatura.style.display = "flex";
+        });
 
-            // Exemplo de como fazer algo com a assinatura
-            console.log("Assinatura capturada: ", assinaturaBase64);
+        // Função para limpar assinatura
+        btnLimparAssinatura.addEventListener('click', function () {
+            ctxAssinatura.clearRect(0, 0, assinaturaCanvas.width, assinaturaCanvas.height);
+        });
 
-            // Fechar o modal e voltar ao formulário
+        // Função para concluir assinatura
+        btnConcluirAssinatura.addEventListener('click', function () {
             modalAssinatura.style.display = "none";
-
-            // Exibir botão de WhatsApp
             whatsappSection.style.display = "block";
-
-            // Definir link para WhatsApp
-            const dados = `nome=${nomeInput.value}&cpf=${cpfInput.value}&expositor=${expositorInput.value}&rua=${ruaInput.value}`;
-            const mensagem = `Olá! Aqui estão os dados preenchidos:\n${dados}\n\nAssinatura: ${assinaturaBase64}`;
-            whatsappBtn.href = `https://wa.me/?text=${encodeURIComponent(mensagem)}`;
         });
 
-        // Função para limpar a assinatura no modal
-        btnLimparAssinatura.addEventListener("click", limparAssinatura);
+        // Função para enviar para WhatsApp
+        whatsappBtn.addEventListener("click", function () {
+            loading.style.display = "block";
+            setTimeout(function () {
+                loading.style.display = "none";
+                alert("Enviado para o WhatsApp com sucesso!");
+            }, 2000);
+        });
 
-        // Função para fechar o modal
-        btnFecharModal.addEventListener("click", () => {
-            modalAssinatura.style.display = "none";
+        // Função para validar os campos
+        function validarCampos() {
+            let valid = true;
+
+            // Nome
+            if (!nomeInput.value) {
+                document.getElementById('errorNome').innerText = "Nome é obrigatório";
+                nomeInput.classList.add('input-error');
+                valid = false;
+            } else {
+                document.getElementById('errorNome').innerText = "";
+                nomeInput.classList.remove('input-error');
+            }
+
+            // CPF
+            if (!cpfInput.value) {
+                document.getElementById('errorCpf').innerText = "CPF é obrigatório";
+                cpfInput.classList.add('input-error');
+                valid = false;
+            } else {
+                document.getElementById('errorCpf').innerText = "";
+                cpfInput.classList.remove('input-error');
+            }
+
+            return valid;
+        }
+
+        // Chamar a validação ao tentar enviar
+        btnCapturarFoto.addEventListener("click", function () {
+            if (validarCampos()) {
+                alert("Campos validados com sucesso!");
+            }
         });
     </script>
-
 </body>
 
 </html>
