@@ -1,53 +1,67 @@
 // ----------- CAPTURA DE ASSINATURA -----------
+// Obtém o canvas e o contexto
 const assinaturaCanvas = document.getElementById("assinatura");
 const ctx = assinaturaCanvas.getContext("2d");
 let desenhando = false;
 
-// Melhorias visuais da assinatura
+// Ajustes visuais da assinatura
 ctx.lineWidth = 3;
 ctx.lineJoin = "round";
 ctx.lineCap = "round";
 ctx.strokeStyle = "#333";
 
-// Eventos de mouse
-assinaturaCanvas.addEventListener("mousedown", (e) => {
+// Funções para desenhar
+const startDrawing = (x, y) => {
     desenhando = true;
     ctx.beginPath();
-    ctx.moveTo(e.offsetX, e.offsetY);
+    ctx.moveTo(x, y);
+};
+
+const draw = (x, y) => {
+    if (desenhando) {
+        ctx.lineTo(x, y);
+        ctx.stroke();
+    }
+};
+
+const stopDrawing = () => {
+    desenhando = false;
+};
+
+// Eventos para desktop (mouse)
+assinaturaCanvas.addEventListener("mousedown", (e) => {
+    startDrawing(e.offsetX, e.offsetY);
 });
 
 assinaturaCanvas.addEventListener("mousemove", (e) => {
     if (desenhando) {
-        ctx.lineTo(e.offsetX, e.offsetY);
-        ctx.stroke();
+        draw(e.offsetX, e.offsetY);
     }
 });
 
-assinaturaCanvas.addEventListener("mouseup", () => desenhando = false);
-assinaturaCanvas.addEventListener("mouseleave", () => desenhando = false);
+assinaturaCanvas.addEventListener("mouseup", stopDrawing);
+assinaturaCanvas.addEventListener("mouseleave", stopDrawing);
 
-// Eventos de toque (celulares)
+// Eventos para dispositivos móveis (toque)
 assinaturaCanvas.addEventListener("touchstart", (e) => {
-    desenhando = true;
+    e.preventDefault(); // Evita o comportamento de rolagem
     let touch = e.touches[0];
     let rect = assinaturaCanvas.getBoundingClientRect();
-    ctx.beginPath();
-    ctx.moveTo(touch.clientX - rect.left, touch.clientY - rect.top);
+    startDrawing(touch.clientX - rect.left, touch.clientY - rect.top);
 });
 
 assinaturaCanvas.addEventListener("touchmove", (e) => {
     if (desenhando) {
         let touch = e.touches[0];
         let rect = assinaturaCanvas.getBoundingClientRect();
-        ctx.lineTo(touch.clientX - rect.left, touch.clientY - rect.top);
-        ctx.stroke();
+        draw(touch.clientX - rect.left, touch.clientY - rect.top);
     }
-    e.preventDefault(); // Evita rolagem da tela ao assinar
+    e.preventDefault(); // Evita rolagem da tela
 });
 
-assinaturaCanvas.addEventListener("touchend", () => desenhando = false);
+assinaturaCanvas.addEventListener("touchend", stopDrawing);
 
-// Melhor experiência no iPhone
+// Melhorando a experiência no iPhone
 assinaturaCanvas.style.touchAction = "none";
 
 // Função para limpar a assinatura
@@ -56,6 +70,7 @@ function limparAssinatura() {
 }
 
 // ----------- CAPTURA DE FOTO -----------
+// Configura o canvas para foto
 const video = document.getElementById("video");
 const fotoCanvas = document.getElementById("fotoCanvas");
 const fotoCtx = fotoCanvas.getContext("2d");
@@ -64,12 +79,12 @@ const fotoCtx = fotoCanvas.getContext("2d");
 fotoCanvas.width = 400;
 fotoCanvas.height = 300;
 
-// Ativar câmera
+// Ativar a câmera
 navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } })
     .then((stream) => video.srcObject = stream)
     .catch((err) => console.error("Erro ao acessar a câmera: ", err));
 
-// Tirar foto
+// Função para tirar a foto
 function tirarFoto() {
     fotoCtx.drawImage(video, 0, 0, fotoCanvas.width, fotoCanvas.height);
     alert("Foto capturada com sucesso!");
@@ -81,6 +96,7 @@ function limparFoto() {
 }
 
 // ----------- ENVIO DOS DADOS -----------
+// Função para enviar os dados para o servidor
 function enviarDados() {
     const nome = document.getElementById("nome").value.trim();
     const cpf = document.getElementById("cpf").value.trim();
@@ -98,12 +114,11 @@ function enviarDados() {
         return;
     }
 
-    // Captura a assinatura como imagem Base64
+    // Captura as imagens como Base64
     const assinaturaBase64 = assinaturaCanvas.toDataURL("image/png");
-
-    // Captura a foto como imagem Base64
     const fotoBase64 = fotoCanvas.toDataURL("image/png");
 
+    // Dados para envio
     const dados = {
         nome,
         cpf,
@@ -111,12 +126,12 @@ function enviarDados() {
         rua,
         assinatura: assinaturaBase64,
         foto: fotoBase64,
-        timestamp: new Date().toISOString(), // Adiciona timestamp para rastreamento
-        userAgent: navigator.userAgent, // Captura informações do navegador para debug
+        timestamp: new Date().toISOString(), // Adiciona timestamp
+        userAgent: navigator.userAgent, // Captura informações do navegador
         ip: "" // Campo para backend preencher com IP do usuário
     };
 
-    // Enviar para o backend
+    // Envio para o backend
     fetch("/api/enviar", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
