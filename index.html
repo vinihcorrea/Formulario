@@ -36,6 +36,13 @@
             border: 1px solid #ddd;
         }
 
+        @media (max-width: 768px) {
+            .container {
+                height: 80%;
+                /* Ajusta a altura da tela no iPhone */
+            }
+        }
+
         .header {
             width: 100%;
             background-color: #4CAF50;
@@ -311,24 +318,25 @@
             isDrawing = false;
         });
 
-        // Limpar assinatura
-        const btnLimparAssinatura = document.getElementById('btnLimparAssinatura');
-        btnLimparAssinatura.addEventListener('click', function () {
+        // Função para limpar a assinatura
+        document.getElementById('btnLimparAssinatura').addEventListener('click', function () {
             contextoAssinatura.clearRect(0, 0, assinaturaCanvas.width, assinaturaCanvas.height);
         });
 
-        // Função de envio para o WhatsApp
+        // Função para enviar via WhatsApp
         whatsappBtn.addEventListener('click', function () {
-            loading.style.display = 'block';
+            const nome = document.getElementById('nome').value;
+            const cpf = document.getElementById('cpf').value;
+            const expositor = document.getElementById('expositor').value;
+            const rua = document.getElementById('rua').value;
 
-            // Simulando envio
-            setTimeout(function () {
-                loading.style.display = 'none';
-                alert('Mensagem enviada com sucesso!');
-            }, 2000);
+            const mensagem = encodeURIComponent(`Nome: ${nome}\nCPF: ${cpf}\nExpositor: ${expositor}\nRua: ${rua}`);
+            const whatsappLink = `https://wa.me/?text=${mensagem}`;
+            window.open(whatsappLink, '_blank');
         });
 
-        iniciarCamera();
+        // Iniciar a câmera ao carregar a página
+        window.onload = iniciarCamera;
     </script>
 
 </body>
