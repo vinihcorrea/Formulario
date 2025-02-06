@@ -1,151 +1,155 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Formulário QR Code</title>
+    <title>Assinatura e Foto</title>
     <style>
-        /* Reset de estilos básicos */
-        * {
+        /* Estilos básicos */
+        body {
+            font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Arial', sans-serif;
-            background-color: #f7f7f7;
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
-            flex-direction: column;
-            color: #333;
-            padding: 20px;
+            height: 100vh;
+            background-color: #f7f7f7;
         }
 
-        h2,
-        h3 {
-            color: #2c3e50;
-            margin-bottom: 16px;
-        }
-
-        .container {
-            background-color: #fff;
-            border-radius: 10px;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-            padding: 40px;
-            width: 100%;
-            max-width: 700px;
+        #tela-inicial,
+        #tela-assinatura {
             text-align: center;
-            margin-top: 20px;
         }
 
-        input,
-        button,
         canvas {
-            display: block;
-            margin: 12px auto;
-            padding: 12px;
-            width: 100%;
-            max-width: 400px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            font-size: 16px;
-        }
-
-        input:focus,
-        button:focus {
-            outline: none;
-            border-color: #3498db;
-        }
-
-        input::placeholder {
-            color: #7f8c8d;
+            border: 1px solid #ccc;
         }
 
         button {
-            background-color: #3498db;
-            color: #fff;
-            cursor: pointer;
-            transition: background-color 0.3s;
-            border: none;
-        }
-
-        button:hover {
-            background-color: #2980b9;
-        }
-
-        .video-container,
-        .canvas-container {
-            margin-bottom: 20px;
-        }
-
-        video,
-        canvas {
-            width: 100%;
-            max-width: 400px;
-            border-radius: 8px;
-            margin-top: 10px;
-        }
-
-        #assinatura {
-            background-color: #ecf0f1;
-            border: 1px solid #bdc3c7;
-            cursor: crosshair;
-        }
-
-        .footer {
-            font-size: 14px;
-            color: #7f8c8d;
             margin-top: 20px;
-        }
-
-        .footer p {
-            text-align: center;
-            font-size: 13px;
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                padding: 30px;
-                max-width: 90%;
-            }
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
         }
     </style>
 </head>
 
 <body>
 
-    <div class="container">
-        <h2>Preencha seus dados</h2>
-
-        <input type="text" id="nome" placeholder="Nome Completo" required>
-        <input type="text" id="cpf" placeholder="CPF" required>
-
-        <h3>Foto:</h3>
-        <div class="video-container">
-            <video id="video" autoplay></video>
-        </div>
-        <button type="button" onclick="tirarFoto()">Tirar Foto</button>
-        <canvas id="fotoCanvas"></canvas>
-
-        <h3>Assinatura:</h3>
-        <div class="canvas-container">
-            <canvas id="assinatura" width="300" height="150"></canvas>
-        </div>
-        <button type="button" onclick="limparAssinatura()">Limpar Assinatura</button>
-
-        <button type="button" onclick="enviarDados()">Enviar para WhatsApp</button>
+    <!-- Tela Inicial -->
+    <div id="tela-inicial">
+        <button id="btnIniciarAssinatura">Assinar</button>
+        <!-- Outros elementos da tela inicial -->
     </div>
 
-    <div class="footer">
-        <p>© 2025 Formulário QR Code. Todos os direitos reservados.</p>
+    <!-- Tela de Assinatura -->
+    <div id="tela-assinatura" style="display:none;">
+        <canvas id="assinatura" width="400" height="200"></canvas>
+        <button id="btnConcluirAssinatura">Concluir</button>
+        <button id="btnLimparAssinatura">Limpar</button>
     </div>
 
-    <script src="app.js"></script>
+    <script>
+        // ----------- CAPTURA DE ASSINATURA ----------- 
+        const assinaturaCanvas = document.getElementById("assinatura");
+        const ctx = assinaturaCanvas.getContext("2d");
+        let desenhando = false;
+
+        // Ajustes visuais da assinatura
+        ctx.lineWidth = 3;
+        ctx.lineJoin = "round";
+        ctx.lineCap = "round";
+        ctx.strokeStyle = "#333";
+
+        // Funções para desenhar
+        const startDrawing = (x, y) => {
+            desenhando = true;
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+        };
+
+        const draw = (x, y) => {
+            if (desenhando) {
+                ctx.lineTo(x, y);
+                ctx.stroke();
+            }
+        };
+
+        const stopDrawing = () => {
+            desenhando = false;
+        };
+
+        // Eventos para desktop (mouse)
+        assinaturaCanvas.addEventListener("mousedown", (e) => {
+            startDrawing(e.offsetX, e.offsetY);
+        });
+
+        assinaturaCanvas.addEventListener("mousemove", (e) => {
+            if (desenhando) {
+                draw(e.offsetX, e.offsetY);
+            }
+        });
+
+        assinaturaCanvas.addEventListener("mouseup", stopDrawing);
+        assinaturaCanvas.addEventListener("mouseleave", stopDrawing);
+
+        // Eventos para dispositivos móveis (toque)
+        assinaturaCanvas.addEventListener("touchstart", (e) => {
+            e.preventDefault(); // Evita o comportamento de rolagem
+            let touch = e.touches[0];
+            let rect = assinaturaCanvas.getBoundingClientRect();
+            startDrawing(touch.clientX - rect.left, touch.clientY - rect.top);
+        });
+
+        assinaturaCanvas.addEventListener("touchmove", (e) => {
+            if (desenhando) {
+                let touch = e.touches[0];
+                let rect = assinaturaCanvas.getBoundingClientRect();
+                draw(touch.clientX - rect.left, touch.clientY - rect.top);
+            }
+            e.preventDefault(); // Evita rolagem da tela
+        });
+
+        assinaturaCanvas.addEventListener("touchend", stopDrawing);
+
+        // Função para limpar a assinatura
+        function limparAssinatura() {
+            ctx.clearRect(0, 0, assinaturaCanvas.width, assinaturaCanvas.height);
+        }
+
+        // ----------- TROCAR PARA A TELA DE ASSINATURA ----------- 
+        const btnIniciarAssinatura = document.getElementById("btnIniciarAssinatura");
+        const btnConcluirAssinatura = document.getElementById("btnConcluirAssinatura");
+        const btnLimparAssinatura = document.getElementById("btnLimparAssinatura");
+        const telaInicial = document.getElementById("tela-inicial");
+        const telaAssinatura = document.getElementById("tela-assinatura");
+
+        btnIniciarAssinatura.addEventListener("click", () => {
+            // Ocultar a tela inicial e mostrar a tela de assinatura
+            telaInicial.style.display = "none";
+            telaAssinatura.style.display = "block";
+        });
+
+        // Concluir a assinatura e voltar para a tela inicial
+        btnConcluirAssinatura.addEventListener("click", () => {
+            // Aqui você pode capturar a imagem da assinatura em base64, se necessário
+            const assinaturaBase64 = assinaturaCanvas.toDataURL("image/png");
+
+            // Limpar a assinatura e voltar para a tela inicial
+            limparAssinatura();
+            telaAssinatura.style.display = "none";
+            telaInicial.style.display = "block";
+
+            // Opcionalmente, você pode exibir a assinatura ou usá-la de alguma maneira
+            console.log("Assinatura concluída:", assinaturaBase64);
+        });
+
+        // Limpar a assinatura
+        btnLimparAssinatura.addEventListener("click", limparAssinatura);
+    </script>
+
 </body>
 
 </html>
