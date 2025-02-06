@@ -298,45 +298,37 @@
         const contextoAssinatura = assinaturaCanvas.getContext('2d');
         let isDrawing = false;
 
-        assinaturaCanvas.addEventListener('mousedown', (e) => {
+        assinaturaCanvas.addEventListener('touchstart', (e) => {
             isDrawing = true;
-            contextoAssinatura.moveTo(e.offsetX, e.offsetY);
+            const rect = assinaturaCanvas.getBoundingClientRect();
+            contextoAssinatura.moveTo(e.touches[0].clientX - rect.left, e.touches[0].clientY - rect.top);
         });
 
-        assinaturaCanvas.addEventListener('mousemove', (e) => {
+        assinaturaCanvas.addEventListener('touchmove', (e) => {
             if (isDrawing) {
-                contextoAssinatura.lineTo(e.offsetX, e.offsetY);
+                const rect = assinaturaCanvas.getBoundingClientRect();
+                contextoAssinatura.lineTo(e.touches[0].clientX - rect.left, e.touches[0].clientY - rect.top);
                 contextoAssinatura.stroke();
             }
         });
 
-        assinaturaCanvas.addEventListener('mouseup', () => {
+        assinaturaCanvas.addEventListener('touchend', () => {
             isDrawing = false;
         });
 
-        assinaturaCanvas.addEventListener('mouseout', () => {
-            isDrawing = false;
+        // Função para finalizar a assinatura
+        document.getElementById('btnConcluirAssinatura').addEventListener('click', function () {
+            const assinaturaData = assinaturaCanvas.toDataURL();
+            whatsappSection.style.display = 'block';
+            whatsappBtn.href = `https://wa.me/?text=Assinatura%20e%20foto%20anexados%20aqui.%20%0A${encodeURIComponent(assinaturaData)}`;
         });
 
-        // Função para limpar a assinatura
+        // Limpar assinatura
         document.getElementById('btnLimparAssinatura').addEventListener('click', function () {
             contextoAssinatura.clearRect(0, 0, assinaturaCanvas.width, assinaturaCanvas.height);
         });
 
-        // Função para enviar via WhatsApp
-        whatsappBtn.addEventListener('click', function () {
-            const nome = document.getElementById('nome').value;
-            const cpf = document.getElementById('cpf').value;
-            const expositor = document.getElementById('expositor').value;
-            const rua = document.getElementById('rua').value;
-
-            const mensagem = encodeURIComponent(`Nome: ${nome}\nCPF: ${cpf}\nExpositor: ${expositor}\nRua: ${rua}`);
-            const whatsappLink = `https://wa.me/?text=${mensagem}`;
-            window.open(whatsappLink, '_blank');
-        });
-
-        // Iniciar a câmera ao carregar a página
-        window.onload = iniciarCamera;
+        iniciarCamera(); // Inicia a câmera assim que a página é carregada
     </script>
 
 </body>
