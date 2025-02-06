@@ -201,6 +201,9 @@
 
         <!-- Botão para tirar foto -->
         <button id="btnTirarFoto">Tirar Foto</button>
+        <!-- Botões para cancelar ou tirar outra foto -->
+        <button id="btnCancelarFoto" style="display:none;">Cancelar Foto</button>
+        <button id="btnTirarOutraFoto" style="display:none;">Tirar Outra Foto</button>
 
         <!-- Seção para mostrar a foto tirada -->
         <div class="photo-container">
@@ -234,6 +237,8 @@
         const canvasFoto = document.getElementById('canvasFoto');
         const fotoPreview = document.getElementById('fotoPreview');
         const btnTirarFoto = document.getElementById('btnTirarFoto');
+        const btnCancelarFoto = document.getElementById('btnCancelarFoto');
+        const btnTirarOutraFoto = document.getElementById('btnTirarOutraFoto');
         const btnColetarAssinatura = document.getElementById('btnColetarAssinatura');
         const whatsappSection = document.getElementById('whatsappSection');
         const whatsappBtn = document.getElementById('whatsappBtn');
@@ -258,6 +263,28 @@
             contexto.drawImage(video, 0, 0, canvasFoto.width, canvasFoto.height);
             fotoPreview.src = canvasFoto.toDataURL('image/png');
             fotoPreview.style.display = 'block';
+
+            btnTirarFoto.style.display = 'none';
+            btnCancelarFoto.style.display = 'inline-block';
+            btnTirarOutraFoto.style.display = 'inline-block';
+        });
+
+        // Cancelar foto
+        btnCancelarFoto.addEventListener('click', function () {
+            fotoPreview.style.display = 'none';
+            btnCancelarFoto.style.display = 'none';
+            btnTirarOutraFoto.style.display = 'none';
+            btnTirarFoto.style.display = 'inline-block';
+        });
+
+        // Tirar outra foto
+        btnTirarOutraFoto.addEventListener('click', function () {
+            fotoPreview.style.display = 'none';
+            const contexto = canvasFoto.getContext('2d');
+            contexto.clearRect(0, 0, canvasFoto.width, canvasFoto.height);
+            btnTirarFoto.style.display = 'inline-block';
+            btnCancelarFoto.style.display = 'none';
+            btnTirarOutraFoto.style.display = 'none';
         });
 
         // Coletar assinatura
