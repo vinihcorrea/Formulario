@@ -28,14 +28,66 @@ const stopDrawing = () => {
     desenhando = false;
 };
 
+// Função para obter a posição do toque ou do mouse (ajustado para dispositivos móveis e desktop)
+const getPosition = (e) => {
+    let rect = assinaturaCanvas.getBoundingClientRect();
+    if (e.touches) {
+        // Para toque em dispositivos móveis
+        return { x: e.touches[0].clientX - rect.left, y: e.touches[0].clientY - rect.top };
+    } else {
+        // Para desktop (mouse)
+        return { x: e.offsetX, y: e.offsetY };
+    }
+};
+
+// Função para ajustar o tamanho do canvas
+function ajustarTamanhoCanvas() {
+    const popUp = document.getElementById("popup-assinatura");
+    const canvas = document.getElementById("assinatura");
+
+    const largura = window.innerWidth * 0.9; // 90% da largura da tela
+    const altura = window.innerHeight * 0.6; // 60% da altura da tela
+
+    canvas.width = largura;
+    canvas.height = altura;
+}
+
+// Chama a função ao abrir o pop-up
+function abrirPopUpAssinatura() {
+    ajustarTamanhoCanvas();
+    const popUp = document.getElementById("popup-assinatura");
+    popUp.style.visibility = "visible"; // Exibe o pop-up
+    popUp.style.opacity = "1"; // Animação suave
+}
+
+// Função para fechar o pop-up da assinatura
+function fecharPopUpAssinatura() {
+    const popUp = document.getElementById("popup-assinatura");
+    popUp.style.opacity = "0"; // Animação suave para ocultar
+    setTimeout(() => {
+        popUp.style.visibility = "hidden"; // Oculta após animação
+    }, 300); // Tempo da animação
+}
+
+// Adiciona a verificação de suporte ao Canvas
+if (!document.createElement('canvas').getContext) {
+    alert("Seu navegador não suporta a funcionalidade de assinatura!");
+    return;
+}
+
+// Melhorando a experiência no iPhone
+assinaturaCanvas.style.touchAction = "none";
+
 // Eventos para desktop (mouse)
 assinaturaCanvas.addEventListener("mousedown", (e) => {
-    startDrawing(e.offsetX, e.offsetY);
+    const { x, y } = getPosition(e);
+    startDrawing(x, y);
 });
 
 assinaturaCanvas.addEventListener("mousemove", (e) => {
     if (desenhando) {
-        draw(e.offsetX, e.offsetY);
+        const { x, y } = getPosition(e);
+        draw(x, y);
     }
 });
 
@@ -45,28 +97,35 @@ assinaturaCanvas.addEventListener("mouseleave", stopDrawing);
 // Eventos para dispositivos móveis (toque)
 assinaturaCanvas.addEventListener("touchstart", (e) => {
     e.preventDefault(); // Evita o comportamento de rolagem
-    let touch = e.touches[0];
-    let rect = assinaturaCanvas.getBoundingClientRect();
-    startDrawing(touch.clientX - rect.left, touch.clientY - rect.top);
+    const { x, y } = getPosition(e);
+    startDrawing(x, y);
 });
 
 assinaturaCanvas.addEventListener("touchmove", (e) => {
-    if (desenhando) {
-        let touch = e.touches[0];
-        let rect = assinaturaCanvas.getBoundingClientRect();
-        draw(touch.clientX - rect.left, touch.clientY - rect.top);
-    }
     e.preventDefault(); // Evita rolagem da tela
+    if (desenhando) {
+        const { x, y } = getPosition(e);
+        draw(x, y);
+    }
 });
 
 assinaturaCanvas.addEventListener("touchend", stopDrawing);
+assinaturaCanvas.addEventListener("touchcancel", stopDrawing);
 
-// Melhorando a experiência no iPhone
-assinaturaCanvas.style.touchAction = "none";
+// Evento para a mudança de orientação da tela (dispositivos móveis)
+window.addEventListener("orientationchange", () => {
+    ajustarTamanhoCanvas();
+});
 
 // Função para limpar a assinatura
 function limparAssinatura() {
     ctx.clearRect(0, 0, assinaturaCanvas.width, assinaturaCanvas.height);
+}
+
+// Função para salvar a assinatura em uma imagem
+function salvarAssinatura() {
+    const dataUrl = assinaturaCanvas.toDataURL("image/png");
+    // Aqui, você pode fazer algo com a imagem, como enviá-la para o servidor ou permitir que o usuário faça o download
 }
 
 // ----------- CAPTURA DE FOTO -----------
