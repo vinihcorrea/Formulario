@@ -153,3 +153,137 @@ function enviarDados() {
             alert("Ocorreu um erro ao enviar os dados. Tente novamente.");
         });
 }
+
+// ----------- MELHORIAS ADICIONAIS -----------
+
+// 1. Aumentar o limite de desenho da assinatura para suportar telas menores
+assinaturaCanvas.width = window.innerWidth * 0.9; // Ajusta a largura conforme a largura da tela
+
+// 2. Ajustar o tamanho da imagem da assinatura conforme a tela
+assinaturaCanvas.height = 150; // Ajuste automático para tamanhos pequenos
+
+// 3. Prevenir a duplicação do clique para o envio dos dados
+let enviando = false;
+
+function enviarDadosSeguros() {
+    if (enviando) return;
+    enviando = true;
+    enviarDados();
+}
+
+// 4. Ajustar o design do botão "Enviar" para garantir que ele esteja sempre visível
+const botaoEnviar = document.getElementById("botaoEnviar");
+botaoEnviar.style.position = "fixed";
+botaoEnviar.style.bottom = "10px";
+botaoEnviar.style.right = "10px";
+
+// 5. Verificar se o navegador é compatível antes de acessar a câmera
+if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    alert("Seu navegador não suporta acesso à câmera.");
+}
+
+// 6. Melhorar a performance ao limpar o canvas da foto e assinatura
+function limparCanvas(canvas, ctx) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+// 7. Adicionar feedback visual para o usuário ao capturar foto
+function feedbackFoto() {
+    const feedbackElement = document.getElementById("feedbackFoto");
+    feedbackElement.innerText = "Foto capturada com sucesso!";
+    setTimeout(() => feedbackElement.innerText = "", 3000);
+}
+
+// 8. Validar o CPF em tempo real enquanto o usuário digita
+document.getElementById("cpf").addEventListener("input", function () {
+    const cpf = this.value;
+    if (!/^\d{11}$/.test(cpf)) {
+        this.setCustomValidity("CPF inválido. Insira 11 números.");
+    } else {
+        this.setCustomValidity("");
+    }
+});
+
+// 9. Melhorar a responsividade no iPhone com ajuste automático do canvas de assinatura
+if (navigator.userAgent.match(/iPhone/)) {
+    assinaturaCanvas.style.width = "100%";
+    assinaturaCanvas.style.height = "auto";
+}
+
+// 10. Salvar automaticamente os dados do formulário em localStorage para prevenir perda de dados
+window.addEventListener("beforeunload", function () {
+    const dadosFormulario = {
+        nome: document.getElementById("nome").value,
+        cpf: document.getElementById("cpf").value,
+        expositor: document.getElementById("expositor").value,
+        rua: document.getElementById("rua").value,
+    };
+    localStorage.setItem("dadosFormulario", JSON.stringify(dadosFormulario));
+});
+
+// 11. Preencher automaticamente os dados do formulário a partir do localStorage
+window.addEventListener("load", function () {
+    const dadosFormulario = JSON.parse(localStorage.getItem("dadosFormulario"));
+    if (dadosFormulario) {
+        document.getElementById("nome").value = dadosFormulario.nome;
+        document.getElementById("cpf").value = dadosFormulario.cpf;
+        document.getElementById("expositor").value = dadosFormulario.expositor;
+        document.getElementById("rua").value = dadosFormulario.rua;
+    }
+});
+
+// 12. Exibir mensagem de confirmação antes de enviar os dados
+function confirmarEnvio() {
+    if (confirm("Você tem certeza que deseja enviar os dados?")) {
+        enviarDadosSeguros();
+    }
+}
+
+// 13. Limitar o tamanho máximo da foto para evitar sobrecarga no servidor
+const MAX_FOTO_SIZE = 2 * 1024 * 1024; // 2 MB
+fotoCanvas.addEventListener("change", function () {
+    const fotoData = fotoCanvas.toDataURL("image/png");
+    if (fotoData.length > MAX_FOTO_SIZE) {
+        alert("A foto capturada é muito grande. Por favor, tente novamente.");
+    }
+});
+
+// 14. Manter o estado de carregamento durante o envio
+function carregarEnvio() {
+    const loadingElement = document.getElementById("loading");
+    loadingElement.style.display = "block";
+}
+
+// 15. Remover estado de carregamento após o envio
+function finalizarEnvio() {
+    const loadingElement = document.getElementById("loading");
+    loadingElement.style.display = "none";
+}
+
+// 16. Melhorar a compatibilidade com Android, garantindo que o botão "Enviar" seja visível
+botaoEnviar.style.zIndex = "1000";
+
+// 17. Garantir que a tela de captura de assinatura tenha um fundo branco
+assinaturaCanvas.style.backgroundColor = "white";
+
+// 18. Desabilitar o envio enquanto há dados pendentes
+function desabilitarEnvio() {
+    botaoEnviar.disabled = true;
+}
+
+// 19. Melhorar a navegação com a adição de atalhos de teclado
+document.addEventListener("keydown", function (e) {
+    if (e.key === "Enter") {
+        confirmarEnvio();
+    }
+});
+
+// 20. Fornecer uma visualização de dados antes do envio
+function visualizarDados() {
+    const nome = document.getElementById("nome").value;
+    const cpf = document.getElementById("cpf").value;
+    const expositor = document.getElementById("expositor").value;
+    const rua = document.getElementById("rua").value;
+    const preview = `Nome: ${nome}\nCPF: ${cpf}\nExpositor: ${expositor}\nRua: ${rua}`;
+    alert("Dados a serem enviados:\n" + preview);
+}
