@@ -140,7 +140,6 @@
         <input type="text" id="expositor" placeholder="Expositor" required>
         <input type="text" id="rua" placeholder="Rua" required>
 
-
         <button id="btnTirarFoto">Tirar Foto</button>
         <button id="btnCancelarFoto" style="display:none;">Cancelar Foto</button>
         <button id="btnTirarOutraFoto" style="display:none;">Tirar Outra Foto</button>
@@ -225,14 +224,32 @@
         });
 
         btnGerarPDF.addEventListener('click', async () => {
-            const pdf = new jsPDF();
-            pdf.text("Nome: " + document.getElementById('nome').value, 10, 10);
-            pdf.text("CPF: " + document.getElementById('cpf').value, 10, 20);
+            // Verificação de existência dos elementos
+            const nomeElement = document.getElementById('nome');
+            const cpfElement = document.getElementById('cpf');
+            const assinaturaCanvas = document.getElementById('assinaturaCanvas');
+            const fotoPreview = document.getElementById('fotoPreview');
 
+            if (!nomeElement || !cpfElement || !assinaturaCanvas || !fotoPreview) {
+                alert("Alguns elementos necessários não foram encontrados.");
+                return;
+            }
+
+            // Logs para diagnóstico
+            console.log("Nome:", nomeElement.value);
+            console.log("CPF:", cpfElement.value);
             const assinaturaImg = assinaturaCanvas.toDataURL("image/png");
+            console.log("Assinatura Img:", assinaturaImg);
+            const fotoImg = fotoPreview.src;
+            console.log("Foto Img:", fotoImg);
+
+            // Gerar o PDF
+            const pdf = new jsPDF();
+            pdf.text("Nome: " + nomeElement.value, 10, 10);
+            pdf.text("CPF: " + cpfElement.value, 10, 20);
+
             pdf.addImage(assinaturaImg, 'PNG', 10, 30, 80, 40);
 
-            const fotoImg = fotoPreview.src;
             if (fotoImg) {
                 pdf.addImage(fotoImg, 'PNG', 10, 80, 80, 60);
             }
