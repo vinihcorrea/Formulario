@@ -167,6 +167,7 @@
         const btnTirarFoto = document.getElementById('btnTirarFoto');
         const assinaturaCanvas = document.getElementById('assinaturaCanvas');
         const btnGerarPDF = document.getElementById('btnGerarPDF');
+        const loading = document.getElementById('loading');
 
         function iniciarCamera() {
             navigator.mediaDevices.getUserMedia({ video: true })
@@ -232,6 +233,9 @@
         }
 
         btnGerarPDF.addEventListener('click', async () => {
+            // Exibir o carregamento enquanto o PDF é gerado
+            loading.style.display = 'block';
+
             // Verificação de existência dos elementos
             const nomeElement = document.getElementById('nome');
             const cpfElement = document.getElementById('cpf');
@@ -240,6 +244,7 @@
 
             if (!nomeElement || !cpfElement || !assinaturaCanvas || !fotoPreview) {
                 alert("Alguns elementos necessários não foram encontrados.");
+                loading.style.display = 'none';
                 return;
             }
 
@@ -263,6 +268,9 @@
             }
 
             pdf.save("assinatura_foto.pdf");
+
+            // Ocultar o carregamento após o envio
+            loading.style.display = 'none';
         });
 
         iniciarCamera();
