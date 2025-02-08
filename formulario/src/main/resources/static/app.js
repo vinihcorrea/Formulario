@@ -1,3 +1,102 @@
+// ----------- CAPTURA DE ASSINATURA -----------
+
+const assinaturaCanvas = document.getElementById("assinatura");
+const ctx = assinaturaCanvas.getContext("2d");
+let desenhando = false;
+
+ctx.lineWidth = 3;
+ctx.lineJoin = "round";
+ctx.lineCap = "round";
+ctx.strokeStyle = "#333";
+
+// Ajusta o tamanho do canvas conforme a tela
+function ajustarTamanhoCanvas() {
+    const largura = Math.min(window.innerWidth * 0.9, 500);
+    assinaturaCanvas.width = largura;
+    assinaturaCanvas.height = 150;
+}
+
+window.addEventListener("load", ajustarTamanhoCanvas);
+window.addEventListener("resize", ajustarTamanhoCanvas);
+window.addEventListener("orientationchange", ajustarTamanhoCanvas);
+
+const startDrawing = (x, y) => {
+    desenhando = true;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+};
+
+const draw = (x, y) => {
+    if (desenhando) {
+        ctx.lineTo(x, y);
+        ctx.stroke();
+    }
+};
+
+const stopDrawing = () => {
+    desenhando = false;
+};
+
+const getPosition = (e) => {
+    const rect = assinaturaCanvas.getBoundingClientRect();
+    if (e.touches) {
+        return {
+            x: e.touches[0].clientX - rect.left,
+            y: e.touches[0].clientY - rect.top
+        };
+    } else {
+        return { x: e.offsetX, y: e.offsetY };
+    }
+};
+
+["mousedown", "touchstart"].forEach(evento =>
+    assinaturaCanvas.addEventListener(evento, (e) => {
+        e.preventDefault();
+        const { x, y } = getPosition(e);
+        startDrawing(x, y);
+    })
+);
+
+["mousemove", "touchmove"].forEach(evento =>
+    assinaturaCanvas.addEventListener(evento, (e) => {
+        e.preventDefault();
+        if (desenhando) {
+            const { x, y } = getPosition(e);
+            draw(x, y);
+        }
+    })
+);
+
+["mouseup", "mouseleave", "touchend", "touchcancel"].forEach(evento =>
+    assinaturaCanvas.addEventListener(evento, stopDrawing)
+);
+
+// ----------- CAPTURA DE FOTO -----------
+
+const video = document.getElementById("video");
+const fotoCanvas = document.getElementById("fotoCanvas");
+const fotoCtx = fotoCanvas.getContext("2d");
+const fotoPreview = document.getElementById("fotoPreview");
+
+fotoCanvas.width = 400;
+fotoCanvas.height = 300;
+
+// Solicita permissão para usar a câmera
+navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } })
+    .then((stream) => video.srcObject = stream)
+    .catch((err) => console.error("Erro ao acessar a câmera:", err));
+
+function tirarFoto() {
+    fotoCtx.drawImage(video, 0, 0, fotoCanvas.width, fotoCanvas.height);
+    fotoPreview.src = fotoCanvas.toDataURL("image/png");
+    fotoPreview.style.display = "block";
+}
+
+function limparFoto() {
+    fotoCtx.clearRect(0, 0, fotoCanvas.width, fotoCanvas.height);
+    fotoPreview.style.display = "none";
+}
+
 // ----------- ENVIO DOS DADOS -----------
 
 let enviando = false;
@@ -104,3 +203,10 @@ function enviarDados() {
             enviando = false;
         });
 }
+
+// ----------- MELHORIAS ADICIONAIS -----------
+
+const botaoEnviar = document.getElementById("botaoEnviar");
+botaoEnviar.style.position = "fixed";
+botaoEnviar.style.bottom = "10px";
+botaoEnviar.style.right = "10px";
