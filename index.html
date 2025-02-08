@@ -136,7 +136,8 @@
         #assinaturaCanvas {
             width: 100%;
             height: 300px;
-            background-color: #fff;
+            background-color: white;
+            /* Deixando o fundo branco */
             border: 2px solid #00bcd4;
             margin-top: 20px;
             border-radius: 10px;
@@ -169,7 +170,305 @@
     </div>
 
     <div class="footer" id="footerVersion">
-        Versão 46.0 - Última atualização: 08/02/2025 às 15:37
+        Versão 1.0 - Última atualização: 08/02/2025 às 15:30
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            if (!window.jspdf || !window.jspdf.jsPDF) {
+                console.error("Erro ao carregar jsPDF!");
+                alert("Erro ao carregar jsPDF. Verifique a conexão com a internet.");
+                return;
+            }
+
+            const { jsPDF } = window.jspdf;
+
+            const video = document.getElementById('video');
+            const canvasFoto = document.getElementById('canvasFoto');
+            const fotoPreview = document.getElementById('fotoPreview');
+            const btnTirarFoto = document.getElementById('btnTirarFoto');
+            const assinaturaCanvas = document.getElementById('assinaturaCanvas');
+            const btnGerarPDF = document.getElementById('btnGerarPDF');
+            const btnLimparAssinatura = document.getElementById('btnLimparAssinatura');
+            const loading = document.getElementById('loading');
+
+            function iniciarCamera() {
+                navigator.mediaDevices.getUserMedia({ video: true })
+                    .then(stream => video.srcObject = stream)
+                    .catch(err => console.error("Erro ao acessar a câmera:", err));
+            }
+
+            btnTirarFoto.addEventListener('click', () => {
+                const contexto = canvasFoto.getContext('2d');
+                canvasFoto.width = video.videoWidth;
+                canvasFoto.height = video.videoHeight;
+                contexto.drawImage(video, 0, 0, canvasFoto.width, canvasFoto.height);
+                fotoPreview.src = canvasFoto.toDataURL('image/png');
+                fotoPreview.style.display = 'block';
+                video.style.display = 'none'; // Esconde o vídeo depois de tirar a foto
+            });
+
+            const ctx = assinaturaCanvas.getContext('2d');
+            let desenhando = false;
+            let lastX = 0;
+            let lastY = 0;
+
+            // Estilo da linha de assinatura
+            ctx.lineWidth = 3;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.strokeStyle = '#00bcd4';
+
+            assinaturaCanvas.width = 600; // Definindo largura fixa para o canvas
+            assinaturaCanvas.height = 300; // Definindo altura fixa para o canvas
+
+            assinaturaCanvas.addEventListener('mousedown', (e) => {
+                desenhando = true;
+                lastX = e.offsetX;
+                lastY = e.offsetY;
+                ctx.beginPath();
+                ctx.moveTo(lastX, lastY);
+            });
+
+            assinaturaCanvas.addEventListener('mousemove', (e) => {
+                if (desenhando) {
+                    const x = e.offsetX;
+                    const y = e.offsetY;
+                    ctx.lineTo(x, y);
+                    ctx.stroke();
+                    lastX = x;
+                    lastY = y;
+                }
+            });
+
+            assinaturaCanvas.addEventListener('mouseup', () => {
+                desenhando = false;
+            });
+
+            assinaturaCanvas.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                const touch = e.touches[0];
+                desenhando = true;
+                lastX = touch.pageX - assinaturaCanvas.offsetLeft;
+                lastY = touch.pageY - assinaturaCanvas.offsetTop;
+                ctx.beginPath();
+                ctx.moveTo(lastX, lastY);
+            });
+
+            assinaturaCanvas.addEventListener('touchmove', (e) => {
+                if (desenhando) {
+                    e.preventDefault();
+                    const touch = e.touches[0];
+                    const x = touch.pageX - assinaturaCanvas.offsetLeft;
+                    const y = touch.pageY - assinaturaCanvas.offsetTop;
+                    ctx.lineTo(x, y);
+                    ctx.stroke();
+                    lastX = x;
+                    lastY = y;
+                }
+            });
+
+            assinaturaCanvas.addEventListener('touchend', () => {
+                desenhando = false;
+            });
+
+            // Limpar assinatura
+            btnLimparAssinatura.addEventListener('click', () => {
+                ctx.clearRect(0, 0, assinaturaCanvas.width, assinaturaCanvas.height);
+            });
+
+            btnGerarPDF.addEventListener('click', () => {
+                const pdf = new jsPDF();
+                const assinaturaImg = assinaturaCanvas.toDataURL('image/png');
+                pdf.addImage(assinaturaImg, 'PNG', 10, 50, 180, 60);
+
+                if (fotoPreview.src) {
+                    pdf.addImage(fotoPreview.src, 'PNG', 10, 120, 180, 120);
+                }
+
+                pdf.save('documento.pdf');
+                loading.style.display = 'none';
+            });
+
+            iniciarCamera();
+        });
+    </script>
+</body>
+
+</html>
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assinatura e Foto</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #1f1f1f, #3f3f3f);
+            color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+            transition: all 0.5s ease;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            padding: 40px;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            backdrop-filter: blur(10px);
+            transition: transform 0.5s ease, opacity 0.5s ease;
+            margin-bottom: 40px;
+        }
+
+        .header {
+            background-color: #00bcd4;
+            color: white;
+            padding: 15px;
+            font-size: 24px;
+            border-radius: 12px 12px 0 0;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            font-family: 'Roboto', sans-serif;
+            letter-spacing: 1px;
+        }
+
+        input,
+        button {
+            width: 100%;
+            padding: 14px;
+            margin: 12px 0;
+            font-size: 18px;
+            border-radius: 10px;
+            border: 1px solid #00bcd4;
+            background-color: #333;
+            color: white;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        input:focus,
+        button:focus {
+            outline: none;
+            background-color: #1c1c1c;
+            box-shadow: 0 0 8px #00bcd4;
+        }
+
+        button {
+            background-color: #00bcd4;
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+            border: none;
+        }
+
+        button:hover {
+            background-color: #0097a7;
+        }
+
+        video,
+        canvas,
+        img {
+            width: 100%;
+            border-radius: 12px;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+            display: none;
+        }
+
+        .btn-cancel {
+            background-color: #e91e63;
+            border: none;
+            font-weight: bold;
+        }
+
+        .btn-cancel:hover {
+            background-color: #d81b60;
+        }
+
+        .loading {
+            display: none;
+            font-size: 18px;
+            color: #00bcd4;
+            margin-top: 20px;
+            font-weight: bold;
+        }
+
+        h2,
+        h3 {
+            color: #00bcd4;
+            font-family: 'Roboto', sans-serif;
+            margin-top: 20px;
+            letter-spacing: 1px;
+        }
+
+        .footer {
+            color: #f0f0f0;
+            font-size: 14px;
+            position: fixed;
+            bottom: 20px;
+            text-align: center;
+            width: 100%;
+            background-color: #1f1f1f;
+            padding: 10px;
+            border-top: 1px solid #00bcd4;
+        }
+
+        /* Estilo para a área de assinatura */
+        #assinaturaCanvas {
+            width: 100%;
+            height: 300px;
+            background-color: white;
+            /* Deixando o fundo branco */
+            border: 2px solid #00bcd4;
+            margin-top: 20px;
+            border-radius: 10px;
+            touch-action: none;
+            /* Evitar zoom ou gestos */
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">Recebimento</div>
+        <h2>Formulário</h2>
+        <input type="text" id="nome" placeholder="Nome" required>
+        <input type="text" id="cpf" placeholder="CPF" required>
+        <input type="text" id="expositor" placeholder="Expositor" required>
+        <input type="text" id="rua" placeholder="Rua" required>
+
+        <button id="btnTirarFoto">Tirar Foto</button>
+        <video id="video" autoplay></video>
+        <canvas id="canvasFoto"></canvas>
+        <img id="fotoPreview" />
+
+        <h3>Assine abaixo</h3>
+        <canvas id="assinaturaCanvas"></canvas>
+        <button id="btnLimparAssinatura" class="btn-cancel">Limpar Assinatura</button>
+
+        <button id="btnGerarPDF">Gerar PDF e Enviar</button>
+        <div id="loading" class="loading">Enviando...</div>
+    </div>
+
+    <div class="footer" id="footerVersion">
+        Versão 48.0 - Última atualização: 08/02/2025 às 15:41
     </div>
 
     <script>
