@@ -8,6 +8,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
+        /* Estilos mantidos do código original */
         * {
             margin: 0;
             padding: 0;
@@ -165,7 +166,6 @@
             border-top: 2px solid #00bcd4;
         }
 
-        /* Estilo para a área de assinatura */
         #assinaturaCanvas {
             width: 100%;
             height: 450px;
@@ -175,37 +175,6 @@
             border-radius: 10px;
             touch-action: none;
             cursor: crosshair;
-            animation: canvasTransition 1s ease;
-        }
-
-        @keyframes canvasTransition {
-            from {
-                opacity: 0;
-                transform: scale(0.98);
-            }
-
-            to {
-                opacity: 1;
-                transform: scale(1);
-            }
-        }
-
-        .input-group {
-            margin-bottom: 20px;
-        }
-
-        .input-group input {
-            font-size: 16px;
-            transition: background 0.3s ease;
-        }
-
-        .input-group input:focus {
-            background-color: #444;
-        }
-
-        /* Animations */
-        .pulse {
-            animation: pulse 1.5s infinite;
         }
     </style>
 </head>
@@ -309,42 +278,28 @@
 
             btnGerarPDF.addEventListener('click', () => {
                 loading.style.display = 'block';
-
                 const doc = new jsPDF();
-                doc.addImage(fotoPreview.src, 'PNG', 15, 40, 180, 160);
-                doc.addImage(assinaturaCanvas.toDataURL('image/png'), 'PNG', 15, 200, 180, 50);
+                doc.text("Formulário", 20, 20);
 
-                const nome = document.getElementById('nome').value;
-                const cpf = document.getElementById('cpf').value;
-                const expositor = document.getElementById('expositor').value;
-                const rua = document.getElementById('rua').value;
+                // Dados do formulário
+                doc.text(`Nome: ${document.getElementById('nome').value}`, 20, 30);
+                doc.text(`CPF: ${document.getElementById('cpf').value}`, 20, 40);
+                doc.text(`Expositor: ${document.getElementById('expositor').value}`, 20, 50);
+                doc.text(`Rua: ${document.getElementById('rua').value}`, 20, 60);
 
-                doc.text(`Nome: ${nome}`, 15, 220);
-                doc.text(`CPF: ${cpf}`, 15, 230);
-                doc.text(`Expositor: ${expositor}`, 15, 240);
-                doc.text(`Rua: ${rua}`, 15, 250);
+                // Foto
+                if (fotoPreview.style.display === 'block') {
+                    doc.addImage(fotoPreview.src, 'PNG', 20, 70, 100, 100);
+                }
 
-                const pdfData = doc.output('blob');
+                // Assinatura
+                if (ctx) {
+                    const assinaturaDataUrl = assinaturaCanvas.toDataURL('image/png');
+                    doc.addImage(assinaturaDataUrl, 'PNG', 20, 180, 100, 50);
+                }
 
-                // Simulação de envio de dados (foto + assinatura + dados em texto)
-                const formData = new FormData();
-                formData.append('pdf', pdfData);
-                formData.append('nome', nome);
-                formData.append('cpf', cpf);
-                formData.append('expositor', expositor);
-                formData.append('rua', rua);
-
-                fetch('/enviar', {
-                    method: 'POST',
-                    body: formData
-                }).then(response => response.json())
-                    .then(data => {
-                        loading.style.display = 'none';
-                        alert('Dados enviados com sucesso!');
-                    }).catch(err => {
-                        loading.style.display = 'none';
-                        alert('Erro ao enviar os dados.');
-                    });
+                doc.save("documento.pdf");
+                loading.style.display = 'none';
             });
 
             iniciarCamera();
