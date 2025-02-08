@@ -11,7 +11,8 @@ ctx.strokeStyle = "#333";
 
 // Ajusta o tamanho do canvas conforme a tela
 function ajustarTamanhoCanvas() {
-    assinaturaCanvas.width = Math.min(window.innerWidth * 0.9, 500);
+    const largura = Math.min(window.innerWidth * 0.9, 500);
+    assinaturaCanvas.width = largura;
     assinaturaCanvas.height = 150;
 }
 
@@ -84,6 +85,7 @@ const fotoPreview = document.getElementById("fotoPreview");
 fotoCanvas.width = 400;
 fotoCanvas.height = 300;
 
+// Solicita permissão para usar a câmera
 navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } })
     .then((stream) => video.srcObject = stream)
     .catch((err) => console.error("Erro ao acessar a câmera:", err));
@@ -112,24 +114,27 @@ function enviarDados() {
     const expositor = document.getElementById("expositor").value.trim();
     const rua = document.getElementById("rua").value.trim();
 
+    // Validação de campos obrigatórios
     if (!nome || !cpf || !expositor || !rua) {
         alert("Por favor, preencha todos os campos corretamente.");
         enviando = false;
         return;
     }
 
+    // Validação do CPF
     if (!/^\d{11}$/.test(cpf)) {
         alert("CPF inválido. Insira 11 números.");
         enviando = false;
         return;
     }
 
-    // Verifica se há algo desenhado no canvas
+    // Verifica se há algo desenhado no canvas (assinatura)
     const assinaturaBase64 = assinaturaCanvas.toDataURL("image/png").length > 100 ?
         assinaturaCanvas.toDataURL("image/png") : null;
     const fotoBase64 = fotoCanvas.toDataURL("image/png").length > 100 ?
         fotoCanvas.toDataURL("image/png") : null;
 
+    // Validação para assinatura e foto
     if (!assinaturaBase64 || !fotoBase64) {
         alert("Por favor, forneça sua assinatura e uma foto.");
         enviando = false;
@@ -147,12 +152,12 @@ function enviarDados() {
         userAgent: navigator.userAgent
     };
 
-    // Gera a mensagem formatada sem erro de sintaxe
+    // Gera a mensagem formatada
     const gerarMensagem = () => {
         return `Dados do Formulário:\n\n\u{1F464} Nome: ${nome}\n\u{1F4CD} CPF: ${cpf}\n\u{1F3E2} Expositor: ${expositor}\n\u{1F4C5} Rua: ${rua}`;
     };
 
-    // Cria o PDF
+    // Criação do PDF
     const doc = new jsPDF();
 
     // Adiciona os dados no PDF
@@ -169,6 +174,7 @@ function enviarDados() {
     // Gera o PDF
     const pdfBase64 = doc.output("datauristring");
 
+    // Envia os dados e o PDF para o servidor
     fetch("/api/enviar", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -181,6 +187,7 @@ function enviarDados() {
         .then(data => {
             console.log("Resposta do servidor:", data);
 
+            // Gera o link para WhatsApp
             const mensagem = gerarMensagem();
             const numeroDestino = "5511980534827";
             const url = `https://wa.me/${numeroDestino}?text=${encodeURIComponent(mensagem)}`;
