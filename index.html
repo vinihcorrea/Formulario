@@ -176,11 +176,15 @@
                 pdf.text("Expositor: " + document.getElementById('expositor').value, 10, 30);
                 pdf.text("Rua: " + document.getElementById('rua').value, 10, 40);
 
+                // Captura a imagem da assinatura
                 const assinaturaImg = assinaturaCanvas.toDataURL("image/png");
                 pdf.addImage(assinaturaImg, 'PNG', 10, 50, 80, 40);
 
-                if (fotoPreview.src) {
+                // Verifica se a imagem da foto está válida antes de adicionar ao PDF
+                if (fotoPreview.src && fotoPreview.src.startsWith('data:image/png')) {
                     pdf.addImage(fotoPreview.src, 'PNG', 10, 100, 80, 60);
+                } else {
+                    console.error("A imagem capturada está corrompida ou incompleta.");
                 }
 
                 pdf.save("relatorio.pdf");
