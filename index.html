@@ -169,7 +169,7 @@
     </div>
 
     <div class="footer" id="footerVersion">
-        Versão 45.0 - Última atualização: 08/02/2025 às 15:35
+        Versão 46.0 - Última atualização: 08/02/2025 às 15:37
     </div>
 
     <script>
@@ -218,6 +218,9 @@
             ctx.lineJoin = 'round';
             ctx.strokeStyle = '#00bcd4';
 
+            assinaturaCanvas.width = 600; // Definindo largura fixa para o canvas
+            assinaturaCanvas.height = 300; // Definindo altura fixa para o canvas
+
             assinaturaCanvas.addEventListener('mousedown', (e) => {
                 desenhando = true;
                 lastX = e.offsetX;
@@ -252,8 +255,8 @@
             });
 
             assinaturaCanvas.addEventListener('touchmove', (e) => {
-                e.preventDefault();
                 if (desenhando) {
+                    e.preventDefault();
                     const touch = e.touches[0];
                     const x = touch.pageX - assinaturaCanvas.offsetLeft;
                     const y = touch.pageY - assinaturaCanvas.offsetTop;
@@ -268,19 +271,13 @@
                 desenhando = false;
             });
 
+            // Limpar assinatura
             btnLimparAssinatura.addEventListener('click', () => {
                 ctx.clearRect(0, 0, assinaturaCanvas.width, assinaturaCanvas.height);
             });
 
             btnGerarPDF.addEventListener('click', () => {
-                loading.style.display = 'block';
-
                 const pdf = new jsPDF();
-                pdf.text("Nome: " + document.getElementById('nome').value, 10, 10);
-                pdf.text("CPF: " + document.getElementById('cpf').value, 10, 20);
-                pdf.text("Expositor: " + document.getElementById('expositor').value, 10, 30);
-                pdf.text("Rua: " + document.getElementById('rua').value, 10, 40);
-
                 const assinaturaImg = assinaturaCanvas.toDataURL('image/png');
                 pdf.addImage(assinaturaImg, 'PNG', 10, 50, 180, 60);
 
