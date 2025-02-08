@@ -6,9 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Assinatura e Foto</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script>
-        window.jsPDF = window.jspdf.jsPDF;
-    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -23,6 +21,7 @@
             justify-content: center;
             align-items: center;
             height: 100vh;
+            margin: 0;
             color: #333;
         }
 
@@ -41,7 +40,7 @@
         .header {
             background-color: #4CAF50;
             color: white;
-            padding: 15px;
+            padding: 15px 0;
             font-size: 26px;
             font-weight: bold;
             border-radius: 10px 10px 0 0;
@@ -55,12 +54,14 @@
             font-size: 16px;
             border-radius: 12px;
             border: 1px solid #ddd;
+            transition: 0.3s ease;
         }
 
         button {
             background-color: #4CAF50;
             color: white;
             cursor: pointer;
+            border: none;
         }
 
         button:hover {
@@ -73,14 +74,58 @@
             object-fit: cover;
             margin-top: 20px;
             border-radius: 10px;
+            border: 2px solid #ddd;
             display: none;
         }
 
-        .signature-container canvas {
+        canvas {
+            border: 1px solid #ccc;
+            margin-top: 20px;
+            border-radius: 8px;
             width: 100%;
             height: 200px;
-            border: 1px solid #ccc;
-            background-color: #f9f9f9;
+        }
+
+        .whatsapp-btn {
+            background-color: #25D366;
+            padding: 12px;
+            border-radius: 8px;
+            text-decoration: none;
+            display: block;
+            margin-top: 20px;
+            color: white;
+            font-weight: bold;
+        }
+
+        .whatsapp-btn:hover {
+            background-color: #128C7E;
+        }
+
+        .photo-container video {
+            width: 100%;
+            height: 250px;
+            border-radius: 10px;
+            background-color: #f0f0f0;
+        }
+
+        .btn-cancel {
+            background-color: #dc3545;
+            color: white;
+            padding: 12px;
+            font-size: 16px;
+            border-radius: 10px;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .btn-cancel:hover {
+            background-color: #c82333;
+        }
+
+        .loading {
+            display: none;
+            font-size: 20px;
+            color: #4CAF50;
         }
     </style>
 </head>
@@ -88,68 +133,111 @@
 <body>
     <div class="container">
         <div class="header">Assinatura e Foto</div>
+
+        <h1>Formulário</h1>
         <input type="text" id="nome" placeholder="Nome" required>
+        <input type="text" id="cpf" placeholder="CPF" required>
+
         <button id="btnTirarFoto">Tirar Foto</button>
-        <video id="video" autoplay></video>
-        <canvas id="canvasFoto" style="display: none;"></canvas>
-        <img id="fotoPreview" class="foto-preview" />
-        <div class="signature-container">
-            <h3>Assine abaixo</h3>
-            <canvas id="assinaturaCanvas"></canvas>
-            <button id="btnConcluirAssinatura">Concluir</button>
-            <button id="btnLimparAssinatura">Limpar</button>
+        <button id="btnCancelarFoto" style="display:none;">Cancelar Foto</button>
+        <button id="btnTirarOutraFoto" style="display:none;">Tirar Outra Foto</button>
+
+        <div class="photo-container">
+            <video id="video" autoplay></video>
+            <canvas id="canvasFoto" style="display: none;"></canvas>
+            <img id="fotoPreview" class="foto-preview" />
         </div>
-        <button id="btnGerarPDF">Gerar PDF</button>
+
+        <h3>Assine abaixo</h3>
+        <canvas id="assinaturaCanvas"></canvas>
+        <button id="btnConcluirAssinatura">Concluir</button>
+        <button id="btnLimparAssinatura" class="btn-cancel">Limpar</button>
+
+        <button id="btnGerarPDF">Gerar PDF e Enviar</button>
+
+        <div id="loading" class="loading">Enviando...</div>
     </div>
 
     <script>
         const video = document.getElementById('video');
         const canvasFoto = document.getElementById('canvasFoto');
         const fotoPreview = document.getElementById('fotoPreview');
-        const assinaturaCanvas = document.getElementById('assinaturaCanvas');
         const btnTirarFoto = document.getElementById('btnTirarFoto');
-        const btnConcluirAssinatura = document.getElementById('btnConcluirAssinatura');
-        const btnLimparAssinatura = document.getElementById('btnLimparAssinatura');
+        const assinaturaCanvas = document.getElementById('assinaturaCanvas');
         const btnGerarPDF = document.getElementById('btnGerarPDF');
-        const ctxAssinatura = assinaturaCanvas.getContext('2d');
-        let isDrawing = false;
 
-        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        function iniciarCamera() {
             navigator.mediaDevices.getUserMedia({ video: true })
                 .then(stream => {
                     video.srcObject = stream;
-                })
-                .catch(error => console.error("Erro ao acessar a câmera:", error));
+                }).catch(err => console.error("Erro ao acessar a câmera:", err));
         }
 
         btnTirarFoto.addEventListener('click', () => {
             const contexto = canvasFoto.getContext('2d');
+            canvasFoto.width = video.videoWidth;
+            canvasFoto.height = video.videoHeight;
             contexto.drawImage(video, 0, 0, canvasFoto.width, canvasFoto.height);
             fotoPreview.src = canvasFoto.toDataURL('image/png');
             fotoPreview.style.display = 'block';
         });
 
-        assinaturaCanvas.addEventListener('mousedown', () => isDrawing = true);
-        assinaturaCanvas.addEventListener('mouseup', () => isDrawing = false);
-        assinaturaCanvas.addEventListener('mousemove', draw);
+        const ctx = assinaturaCanvas.getContext('2d');
+        let desenhando = false;
 
-        function draw(event) {
-            if (!isDrawing) return;
-            ctxAssinatura.lineTo(event.offsetX, event.offsetY);
-            ctxAssinatura.stroke();
-        }
-
-        btnLimparAssinatura.addEventListener('click', () => {
-            ctxAssinatura.clearRect(0, 0, assinaturaCanvas.width, assinaturaCanvas.height);
+        assinaturaCanvas.addEventListener('mousedown', (e) => {
+            desenhando = true;
+            ctx.moveTo(e.offsetX, e.offsetY);
         });
 
-        btnGerarPDF.addEventListener('click', () => {
-            const doc = new jsPDF();
-            doc.text("Assinatura e Foto", 10, 10);
-            doc.addImage(fotoPreview.src, 'PNG', 10, 20, 50, 50);
-            doc.addImage(assinaturaCanvas.toDataURL('image/png'), 'PNG', 10, 80, 50, 50);
-            doc.save("documento.pdf");
+        assinaturaCanvas.addEventListener('mousemove', (e) => {
+            if (desenhando) {
+                ctx.lineTo(e.offsetX, e.offsetY);
+                ctx.stroke();
+            }
         });
+
+        assinaturaCanvas.addEventListener('mouseup', () => {
+            desenhando = false;
+        });
+
+        assinaturaCanvas.addEventListener('touchstart', (e) => {
+            desenhando = true;
+            const touch = e.touches[0];
+            ctx.moveTo(touch.clientX - assinaturaCanvas.offsetLeft, touch.clientY - assinaturaCanvas.offsetTop);
+            e.preventDefault();
+        });
+
+        assinaturaCanvas.addEventListener('touchmove', (e) => {
+            if (desenhando) {
+                const touch = e.touches[0];
+                ctx.lineTo(touch.clientX - assinaturaCanvas.offsetLeft, touch.clientY - assinaturaCanvas.offsetTop);
+                ctx.stroke();
+            }
+            e.preventDefault();
+        });
+
+        assinaturaCanvas.addEventListener('touchend', () => {
+            desenhando = false;
+        });
+
+        btnGerarPDF.addEventListener('click', async () => {
+            const pdf = new jsPDF();
+            pdf.text("Nome: " + document.getElementById('nome').value, 10, 10);
+            pdf.text("CPF: " + document.getElementById('cpf').value, 10, 20);
+
+            const assinaturaImg = assinaturaCanvas.toDataURL("image/png");
+            pdf.addImage(assinaturaImg, 'PNG', 10, 30, 80, 40);
+
+            const fotoImg = fotoPreview.src;
+            if (fotoImg) {
+                pdf.addImage(fotoImg, 'PNG', 10, 80, 80, 60);
+            }
+
+            pdf.save("assinatura_foto.pdf");
+        });
+
+        iniciarCamera();
     </script>
 </body>
 
