@@ -8,7 +8,205 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
-        /* ... (sem alterações nas regras de estilo) */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+
+        body {
+            background: radial-gradient(circle, rgba(45, 45, 45, 1) 0%, rgba(0, 0, 0, 1) 100%);
+            color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+            transition: all 0.5s ease;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 700px;
+            padding: 40px;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 20px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.7);
+            text-align: center;
+            backdrop-filter: blur(12px);
+            transition: transform 0.5s ease, opacity 0.5s ease;
+            margin-bottom: 40px;
+            animation: fadeInUp 1s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header {
+            background-color: #00bcd4;
+            color: white;
+            padding: 20px;
+            font-size: 28px;
+            border-radius: 15px 15px 0 0;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+            font-family: 'Roboto', sans-serif;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        input,
+        button {
+            width: 100%;
+            padding: 16px;
+            margin: 12px 0;
+            font-size: 18px;
+            border-radius: 10px;
+            border: 1px solid #00bcd4;
+            background-color: #333;
+            color: white;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+            outline: none;
+        }
+
+        input:focus,
+        button:focus {
+            background-color: #1c1c1c;
+            box-shadow: 0 0 10px #00bcd4;
+            transform: scale(1.05);
+        }
+
+        button {
+            background-color: #00bcd4;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background-color: #0097a7;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+        }
+
+        video,
+        canvas,
+        img {
+            width: 100%;
+            border-radius: 12px;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+            display: none;
+        }
+
+        .btn-cancel {
+            background-color: #e91e63;
+            border: none;
+            font-weight: bold;
+        }
+
+        .btn-cancel:hover {
+            background-color: #d81b60;
+        }
+
+        .loading {
+            display: none;
+            font-size: 20px;
+            color: #00bcd4;
+            margin-top: 20px;
+            font-weight: bold;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+
+            50% {
+                transform: scale(1.1);
+                opacity: 0.7;
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        h2,
+        h3 {
+            color: #00bcd4;
+            font-family: 'Roboto', sans-serif;
+            margin-top: 20px;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+
+        .footer {
+            color: #f0f0f0;
+            font-size: 16px;
+            position: fixed;
+            bottom: 20px;
+            text-align: center;
+            width: 100%;
+            background-color: #1f1f1f;
+            padding: 15px;
+            border-top: 2px solid #00bcd4;
+        }
+
+        /* Estilo para a área de assinatura */
+        #assinaturaCanvas {
+            width: 100%;
+            height: 450px;
+            background-color: white;
+            border: 3px solid #00bcd4;
+            margin-top: 20px;
+            border-radius: 10px;
+            touch-action: none;
+            cursor: crosshair;
+            animation: canvasTransition 1s ease;
+        }
+
+        @keyframes canvasTransition {
+            from {
+                opacity: 0;
+                transform: scale(0.98);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group input {
+            font-size: 16px;
+            transition: background 0.3s ease;
+        }
+
+        .input-group input:focus {
+            background-color: #444;
+        }
+
+        /* Animations */
+        .pulse {
+            animation: pulse 1.5s infinite;
+        }
     </style>
 </head>
 
@@ -16,10 +214,18 @@
     <div class="container">
         <div class="header">Recebimento</div>
         <h2>Formulário</h2>
-        <input type="text" id="nome" placeholder="Nome" required>
-        <input type="text" id="cpf" placeholder="CPF" required>
-        <input type="text" id="expositor" placeholder="Expositor" required>
-        <input type="text" id="rua" placeholder="Rua" required>
+        <div class="input-group">
+            <input type="text" id="nome" placeholder="Nome" required>
+        </div>
+        <div class="input-group">
+            <input type="text" id="cpf" placeholder="CPF" required>
+        </div>
+        <div class="input-group">
+            <input type="text" id="expositor" placeholder="Expositor" required>
+        </div>
+        <div class="input-group">
+            <input type="text" id="rua" placeholder="Rua" required>
+        </div>
 
         <button id="btnTirarFoto">Tirar Foto</button>
         <video id="video" autoplay></video>
@@ -31,7 +237,7 @@
         <button id="btnLimparAssinatura" class="btn-cancel">Limpar Assinatura</button>
 
         <button id="btnGerarPDF">Gerar PDF e Enviar</button>
-        <div id="loading" class="loading">Enviando...</div>
+        <div id="loading" class="loading pulse">Enviando...</div>
     </div>
 
     <div class="footer" id="footerVersion">
@@ -40,12 +246,6 @@
 
     <script>
         document.addEventListener("DOMContentLoaded", function () {
-            if (!window.jspdf || !window.jspdf.jsPDF) {
-                console.error("Erro ao carregar jsPDF!");
-                alert("Erro ao carregar jsPDF. Verifique a conexão com a internet.");
-                return;
-            }
-
             const { jsPDF } = window.jspdf;
 
             const video = document.getElementById('video');
@@ -70,7 +270,7 @@
                 contexto.drawImage(video, 0, 0, canvasFoto.width, canvasFoto.height);
                 fotoPreview.src = canvasFoto.toDataURL('image/png');
                 fotoPreview.style.display = 'block';
-                video.style.display = 'none'; // Esconde o vídeo depois de tirar a foto
+                video.style.display = 'none';
             });
 
             const ctx = assinaturaCanvas.getContext('2d');
@@ -78,14 +278,13 @@
             let lastX = 0;
             let lastY = 0;
 
-            // Estilo da linha de assinatura
             ctx.lineWidth = 3;
             ctx.lineCap = 'round';
             ctx.lineJoin = 'round';
             ctx.strokeStyle = '#00bcd4';
 
-            assinaturaCanvas.width = 600; // Definindo largura fixa para o canvas
-            assinaturaCanvas.height = 300; // Definindo altura fixa para o canvas
+            assinaturaCanvas.width = 600;
+            assinaturaCanvas.height = 300;
 
             assinaturaCanvas.addEventListener('mousedown', (e) => {
                 desenhando = true;
@@ -137,7 +336,6 @@
                 desenhando = false;
             });
 
-            // Limpar assinatura
             btnLimparAssinatura.addEventListener('click', () => {
                 ctx.clearRect(0, 0, assinaturaCanvas.width, assinaturaCanvas.height);
             });
@@ -150,23 +348,6 @@
                 if (fotoPreview.src) {
                     pdf.addImage(fotoPreview.src, 'PNG', 10, 120, 180, 120);
                 }
-
-                // Criar texto com os dados e enviar via WhatsApp
-                const nome = document.getElementById('nome').value;
-                const cpf = document.getElementById('cpf').value;
-                const expositor = document.getElementById('expositor').value;
-                const rua = document.getElementById('rua').value;
-
-                const mensagem = `
-                    Nome: ${nome}
-                    CPF: ${cpf}
-                    Expositor: ${expositor}
-                    Rua: ${rua}
-                `;
-
-                const encodedMessage = encodeURIComponent(mensagem);
-                const whatsappURL = `https://wa.me/?text=${encodedMessage}`;
-                window.open(whatsappURL, '_blank');
 
                 pdf.save('documento.pdf');
                 loading.style.display = 'none';
