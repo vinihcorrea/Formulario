@@ -91,7 +91,7 @@
             border-radius: 12px;
             margin-top: 20px;
             transition: all 0.3s ease;
-            display: none; /* Inicialmente, o vídeo e a foto não aparecem */
+            display: none;
         }
 
         .btn-cancel {
@@ -120,23 +120,6 @@
             letter-spacing: 1px;
         }
 
-        @media screen and (max-width: 600px) {
-            .container {
-                padding: 20px;
-                width: 90%;
-                box-shadow: none;
-            }
-
-            .header {
-                font-size: 20px;
-            }
-
-            input,
-            button {
-                font-size: 16px;
-            }
-        }
-
         .footer {
             color: #f0f0f0;
             font-size: 14px;
@@ -147,6 +130,18 @@
             background-color: #1f1f1f;
             padding: 10px;
             border-top: 1px solid #00bcd4;
+        }
+
+        /* Estilo para a área de assinatura */
+        #assinaturaCanvas {
+            width: 100%;
+            height: 300px;
+            background-color: #fff;
+            border: 2px solid #00bcd4;
+            margin-top: 20px;
+            border-radius: 10px;
+            touch-action: none;
+            /* Evitar zoom ou gestos */
         }
     </style>
 </head>
@@ -174,7 +169,7 @@
     </div>
 
     <div class="footer" id="footerVersion">
-        Versão 1.0 - Última atualização: 08/02/2025 às 15:30
+        Versão 45.0 - Última atualização: 08/02/2025 às 15:35
     </div>
 
     <script>
@@ -214,20 +209,62 @@
 
             const ctx = assinaturaCanvas.getContext('2d');
             let desenhando = false;
+            let lastX = 0;
+            let lastY = 0;
+
+            // Estilo da linha de assinatura
+            ctx.lineWidth = 3;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.strokeStyle = '#00bcd4';
 
             assinaturaCanvas.addEventListener('mousedown', (e) => {
                 desenhando = true;
-                ctx.moveTo(e.offsetX, e.offsetY);
+                lastX = e.offsetX;
+                lastY = e.offsetY;
+                ctx.beginPath();
+                ctx.moveTo(lastX, lastY);
             });
 
             assinaturaCanvas.addEventListener('mousemove', (e) => {
                 if (desenhando) {
-                    ctx.lineTo(e.offsetX, e.offsetY);
+                    const x = e.offsetX;
+                    const y = e.offsetY;
+                    ctx.lineTo(x, y);
                     ctx.stroke();
+                    lastX = x;
+                    lastY = y;
                 }
             });
 
             assinaturaCanvas.addEventListener('mouseup', () => {
+                desenhando = false;
+            });
+
+            assinaturaCanvas.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                const touch = e.touches[0];
+                desenhando = true;
+                lastX = touch.pageX - assinaturaCanvas.offsetLeft;
+                lastY = touch.pageY - assinaturaCanvas.offsetTop;
+                ctx.beginPath();
+                ctx.moveTo(lastX, lastY);
+            });
+
+            assinaturaCanvas.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                if (desenhando) {
+                    const touch = e.touches[0];
+                    const x = touch.pageX - assinaturaCanvas.offsetLeft;
+                    const y = touch.pageY - assinaturaCanvas.offsetTop;
+                    ctx.lineTo(x, y);
+                    ctx.stroke();
+                    lastX = x;
+                    lastY = y;
+                }
+            });
+
+            assinaturaCanvas.addEventListener('touchend', () => {
                 desenhando = false;
             });
 
@@ -244,16 +281,14 @@
                 pdf.text("Expositor: " + document.getElementById('expositor').value, 10, 30);
                 pdf.text("Rua: " + document.getElementById('rua').value, 10, 40);
 
-                const assinaturaImg = assinaturaCanvas.toDataURL("image/png");
-                pdf.addImage(assinaturaImg, 'PNG', 10, 50, 80, 40);
+                const assinaturaImg = assinaturaCanvas.toDataURL('image/png');
+                pdf.addImage(assinaturaImg, 'PNG', 10, 50, 180, 60);
 
-                if (fotoPreview.src && fotoPreview.src.startsWith('data:image/png')) {
-                    pdf.addImage(fotoPreview.src, 'PNG', 10, 100, 80, 60);
-                } else {
-                    console.error("A imagem capturada está corrompida ou incompleta.");
+                if (fotoPreview.src) {
+                    pdf.addImage(fotoPreview.src, 'PNG', 10, 120, 180, 120);
                 }
 
-                pdf.save("relatorio.pdf");
+                pdf.save('documento.pdf');
                 loading.style.display = 'none';
             });
 
