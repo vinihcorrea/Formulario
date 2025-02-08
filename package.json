@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "html2canvas": "^1.4.1",
+    "react-signature-canvas": "^1.0.7"
+  }
+}
