@@ -223,6 +223,14 @@
             desenhando = false;
         });
 
+        // Verificação do carregamento da jsPDF
+        const { jsPDF } = window.jspdf;
+        if (typeof jsPDF === 'undefined') {
+            console.error("jsPDF não foi carregado corretamente.");
+        } else {
+            console.log("jsPDF carregado corretamente.");
+        }
+
         btnGerarPDF.addEventListener('click', async () => {
             // Verificação de existência dos elementos
             const nomeElement = document.getElementById('nome');
