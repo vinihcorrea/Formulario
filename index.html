@@ -24,13 +24,13 @@
             flex-direction: column;
             height: 100vh;
             overflow: hidden;
-            transition: all 0.5s ease;
+            padding: 20px;
         }
 
         .container {
             width: 100%;
             max-width: 700px;
-            padding: 40px;
+            padding: 30px;
             background: rgba(0, 0, 0, 0.8);
             border-radius: 20px;
             box-shadow: 0 15px 40px rgba(0, 0, 0, 0.7);
@@ -278,61 +278,28 @@
             let lastX = 0;
             let lastY = 0;
 
-            ctx.lineWidth = 3;
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
-            ctx.strokeStyle = '#00bcd4';
+            ctx.lineWidth = 5;
+            ctx.lineJoin = "round";
+            ctx.lineCap = "round";
+            ctx.strokeStyle = "#00bcd4";
 
-            assinaturaCanvas.width = 600;
-            assinaturaCanvas.height = 300;
-
-            assinaturaCanvas.addEventListener('mousedown', (e) => {
+            assinaturaCanvas.addEventListener('mousedown', e => {
                 desenhando = true;
                 lastX = e.offsetX;
                 lastY = e.offsetY;
-                ctx.beginPath();
-                ctx.moveTo(lastX, lastY);
             });
 
-            assinaturaCanvas.addEventListener('mousemove', (e) => {
-                if (desenhando) {
-                    const x = e.offsetX;
-                    const y = e.offsetY;
-                    ctx.lineTo(x, y);
-                    ctx.stroke();
-                    lastX = x;
-                    lastY = y;
-                }
+            assinaturaCanvas.addEventListener('mousemove', e => {
+                if (!desenhando) return;
+                ctx.beginPath();
+                ctx.moveTo(lastX, lastY);
+                ctx.lineTo(e.offsetX, e.offsetY);
+                ctx.stroke();
+                lastX = e.offsetX;
+                lastY = e.offsetY;
             });
 
             assinaturaCanvas.addEventListener('mouseup', () => {
-                desenhando = false;
-            });
-
-            assinaturaCanvas.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                const touch = e.touches[0];
-                desenhando = true;
-                lastX = touch.pageX - assinaturaCanvas.offsetLeft;
-                lastY = touch.pageY - assinaturaCanvas.offsetTop;
-                ctx.beginPath();
-                ctx.moveTo(lastX, lastY);
-            });
-
-            assinaturaCanvas.addEventListener('touchmove', (e) => {
-                if (desenhando) {
-                    e.preventDefault();
-                    const touch = e.touches[0];
-                    const x = touch.pageX - assinaturaCanvas.offsetLeft;
-                    const y = touch.pageY - assinaturaCanvas.offsetTop;
-                    ctx.lineTo(x, y);
-                    ctx.stroke();
-                    lastX = x;
-                    lastY = y;
-                }
-            });
-
-            assinaturaCanvas.addEventListener('touchend', () => {
                 desenhando = false;
             });
 
@@ -341,16 +308,43 @@
             });
 
             btnGerarPDF.addEventListener('click', () => {
-                const pdf = new jsPDF();
-                const assinaturaImg = assinaturaCanvas.toDataURL('image/png');
-                pdf.addImage(assinaturaImg, 'PNG', 10, 50, 180, 60);
+                loading.style.display = 'block';
 
-                if (fotoPreview.src) {
-                    pdf.addImage(fotoPreview.src, 'PNG', 10, 120, 180, 120);
-                }
+                const doc = new jsPDF();
+                doc.addImage(fotoPreview.src, 'PNG', 15, 40, 180, 160);
+                doc.addImage(assinaturaCanvas.toDataURL('image/png'), 'PNG', 15, 200, 180, 50);
 
-                pdf.save('documento.pdf');
-                loading.style.display = 'none';
+                const nome = document.getElementById('nome').value;
+                const cpf = document.getElementById('cpf').value;
+                const expositor = document.getElementById('expositor').value;
+                const rua = document.getElementById('rua').value;
+
+                doc.text(`Nome: ${nome}`, 15, 220);
+                doc.text(`CPF: ${cpf}`, 15, 230);
+                doc.text(`Expositor: ${expositor}`, 15, 240);
+                doc.text(`Rua: ${rua}`, 15, 250);
+
+                const pdfData = doc.output('blob');
+
+                // Simulação de envio de dados (foto + assinatura + dados em texto)
+                const formData = new FormData();
+                formData.append('pdf', pdfData);
+                formData.append('nome', nome);
+                formData.append('cpf', cpf);
+                formData.append('expositor', expositor);
+                formData.append('rua', rua);
+
+                fetch('/enviar', {
+                    method: 'POST',
+                    body: formData
+                }).then(response => response.json())
+                    .then(data => {
+                        loading.style.display = 'none';
+                        alert('Dados enviados com sucesso!');
+                    }).catch(err => {
+                        loading.style.display = 'none';
+                        alert('Erro ao enviar os dados.');
+                    });
             });
 
             iniciarCamera();
