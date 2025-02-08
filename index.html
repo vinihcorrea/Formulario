@@ -89,6 +89,8 @@
             border-radius: 12px;
             margin-top: 20px;
             transition: all 0.3s ease;
+            display: none;
+            /* Inicialmente, o vídeo e a foto não aparecem */
         }
 
         .btn-cancel {
@@ -147,8 +149,8 @@
 
         <button id="btnTirarFoto">Tirar Foto</button>
         <video id="video" autoplay></video>
-        <canvas id="canvasFoto" style="display: none;"></canvas>
-        <img id="fotoPreview" style="display: none;" />
+        <canvas id="canvasFoto"></canvas>
+        <img id="fotoPreview" />
 
         <h3>Assine abaixo</h3>
         <canvas id="assinaturaCanvas"></canvas>
@@ -190,6 +192,7 @@
                 contexto.drawImage(video, 0, 0, canvasFoto.width, canvasFoto.height);
                 fotoPreview.src = canvasFoto.toDataURL('image/png');
                 fotoPreview.style.display = 'block';
+                video.style.display = 'none'; // Esconde o vídeo depois de tirar a foto
             });
 
             const ctx = assinaturaCanvas.getContext('2d');
