@@ -99,7 +99,9 @@ function limparFoto() {
 
 // ----------- ENVIO DOS DADOS -----------
 
-let enviando = false;
+function gerarMensagem() {
+    return `Dados do Formulário:\n\n\u{1F464} Nome: ${nome}\n\u{1F4CD} CPF: ${cpf}\n\u{1F3E2} Expositor: ${expositor}\n\u{1F4C5} Rua: ${rua}`;
+}
 
 function enviarDados() {
     if (enviando) return;
@@ -147,26 +149,16 @@ function enviarDados() {
         userAgent: navigator.userAgent
     };
 
-    // Gera a mensagem formatada
-    const gerarMensagem = () => {
-        return `Dados do Formulário:\n\n\u{1F464} Nome: ${nome}\n\u{1F4CD} CPF: ${cpf}\n\u{1F3E2} Expositor: ${expositor}\n\u{1F4C5} Rua: ${rua}`;
-    };
-
     // Criação do PDF
     const doc = new jsPDF();
-
-    // Adiciona os dados no PDF
     doc.text("Dados do Formulário:", 10, 10);
     doc.text(`Nome: ${nome}`, 10, 20);
     doc.text(`CPF: ${cpf}`, 10, 30);
     doc.text(`Expositor: ${expositor}`, 10, 40);
     doc.text(`Rua: ${rua}`, 10, 50);
-
-    // Adiciona a foto e assinatura no PDF
     doc.addImage(fotoCanvas.toDataURL("image/png"), "PNG", 10, 60, 50, 50); // Foto
     doc.addImage(assinaturaCanvas.toDataURL("image/png"), "PNG", 10, 120, 50, 20); // Assinatura
 
-    // Gera o PDF
     const pdfBase64 = doc.output("datauristring");
 
     // Envia os dados e o PDF para o servidor
@@ -182,18 +174,13 @@ function enviarDados() {
         .then(data => {
             console.log("Resposta do servidor:", data);
 
-            // Gera o link para WhatsApp
+            // Gerar link do WhatsApp
             const mensagem = gerarMensagem();
-            const numeroDestino = "5511980534827";
+            const numeroDestino = "5511980534827";  // Certifique-se de que esse número esteja no formato correto com o código do país
             const url = `https://wa.me/${numeroDestino}?text=${encodeURIComponent(mensagem)}`;
 
-            // Tenta abrir o link do WhatsApp em uma nova aba ou janela
-            try {
-                window.open(url, "_blank");
-            } catch (error) {
-                console.error("Erro ao abrir o link do WhatsApp:", error);
-                alert("Não foi possível abrir o WhatsApp. Tente novamente.");
-            }
+            // Usar window.location.href para redirecionar ao WhatsApp
+            window.location.href = url;
         })
         .catch(error => {
             console.error("Erro:", error);
@@ -203,10 +190,3 @@ function enviarDados() {
             enviando = false;
         });
 }
-
-// ----------- MELHORIAS ADICIONAIS -----------
-
-const botaoEnviar = document.getElementById("botaoEnviar");
-botaoEnviar.style.position = "fixed";
-botaoEnviar.style.bottom = "10px";
-botaoEnviar.style.right = "10px";
