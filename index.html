@@ -239,6 +239,8 @@
             // Verificação de existência dos elementos
             const nomeElement = document.getElementById('nome');
             const cpfElement = document.getElementById('cpf');
+            const expositorElement = document.getElementById('expositor');
+            const ruaElement = document.getElementById('rua');
             const assinaturaCanvas = document.getElementById('assinaturaCanvas');
             const fotoPreview = document.getElementById('fotoPreview');
 
@@ -260,6 +262,8 @@
             const pdf = new jsPDF();
             pdf.text("Nome: " + nomeElement.value, 10, 10);
             pdf.text("CPF: " + cpfElement.value, 10, 20);
+            pdf.text("expositor: " + expositorElement.value, 10, 20);
+            pdf.text("rua: " + ruaElement.value, 10, 20);
 
             pdf.addImage(assinaturaImg, 'PNG', 10, 30, 80, 40);
 
