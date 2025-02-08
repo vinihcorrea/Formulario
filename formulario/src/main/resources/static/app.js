@@ -152,11 +152,27 @@ function enviarDados() {
         return `Dados do Formulário:\n\n\u{1F464} Nome: ${nome}\n\u{1F4CD} CPF: ${cpf}\n\u{1F3E2} Expositor: ${expositor}\n\u{1F4C5} Rua: ${rua}`;
     };
 
+    // Cria o PDF
+    const doc = new jsPDF();
+
+    // Adiciona os dados no PDF
+    doc.text("Dados do Formulário:", 10, 10);
+    doc.text(`Nome: ${nome}`, 10, 20);
+    doc.text(`CPF: ${cpf}`, 10, 30);
+    doc.text(`Expositor: ${expositor}`, 10, 40);
+    doc.text(`Rua: ${rua}`, 10, 50);
+
+    // Adiciona a foto e assinatura no PDF
+    doc.addImage(fotoCanvas.toDataURL("image/png"), "PNG", 10, 60, 50, 50); // Foto
+    doc.addImage(assinaturaCanvas.toDataURL("image/png"), "PNG", 10, 120, 50, 20); // Assinatura
+
+    // Gera o PDF
+    const pdfBase64 = doc.output("datauristring");
 
     fetch("/api/enviar", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(dados)
+        body: JSON.stringify({ ...dados, pdf: pdfBase64 })
     })
         .then(response => {
             if (!response.ok) throw new Error("Erro ao enviar os dados.");
