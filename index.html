@@ -3,72 +3,342 @@ import { Button } from "@/components/ui/button";
 import SignatureCanvas from "react-signature-canvas";
 import html2canvas from "html2canvas";
 
-export default function SignatureCapture() {
-const signatureRef = useRef(null);
-const [image, setImage] = useState(null);
-const [photo, setPhoto] = useState(null);
-const fileInputRef = useRef(null);
-const [formData, setFormData] = useState({ nome: "", cpf: "", endereco: "" });
+<!DOCTYPE html>
+<html lang="pt-br">
 
-const clearSignature = () => {
-signatureRef.current.clear();
-};
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assinatura e Foto</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script>
+        window.jsPDF = window.jspdf.jsPDF;
+    </script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-const handleCapture = async () => {
-const signatureImage = signatureRef.current.toDataURL("image/png");
-const container = document.getElementById("capture-area");
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f7f7f7;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            color: #333;
+        }
 
-if (container) {
-const canvas = await html2canvas(container);
-setImage(canvas.toDataURL("image/png"));
-}
-};
+        .container {
+            width: 100%;
+            max-width: 480px;
+            padding: 30px;
+            background-color: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            position: relative;
+            border: 1px solid #ddd;
+        }
 
-const handlePhotoUpload = (event) => {
-const file = event.target.files[0];
-if (file) {
-const reader = new FileReader();
-reader.onloadend = () => {
-setPhoto(reader.result);
-};
-reader.readAsDataURL(file);
-}
-};
+        @media (max-width: 768px) {
+            .container {
+                height: auto;
+                padding: 20px;
+            }
+        }
+        
+        .header {
+            width: 100%;
+            background-color: #4CAF50;
+            color: white;
+            padding: 15px 0;
+            text-align: center;
+            font-size: 26px;
+            font-weight: bold;
+            border-radius: 10px 10px 0 0;
+        }
 
-const handleChange = (e) => {
-setFormData({ ...formData, [e.target.name]: e.target.value });
-};
+        h1 {
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
 
-return (
-<div className="flex flex-col items-center p-4 space-y-4 bg-gray-100 min-h-screen">
-    <div id="capture-area" className="bg-white p-4 rounded-lg shadow-lg w-full max-w-lg">
-        <h2 className="text-xl font-bold mb-4">Formulário</h2>
-        <input type="text" name="nome" placeholder="Nome" value={formData.nome} onChange={handleChange}
-            className="w-full p-2 border rounded mb-2" />
-        <input type="text" name="cpf" placeholder="CPF" value={formData.cpf} onChange={handleChange}
-            className="w-full p-2 border rounded mb-2" />
-        <input type="text" name="endereco" placeholder="Endereço" value={formData.endereco} onChange={handleChange}
-            className="w-full p-2 border rounded mb-2" />
+        input,
+        button,
+        #uploadFoto,
+        #btnTirarFoto,
+        #btnColetarAssinatura,
+        .whatsapp-btn {
+            width: 100%;
+            padding: 14px;
+            margin: 12px 0;
+            font-size: 16px;
+            border-radius: 12px;
+            border: 1px solid #ddd;
+            transition: border 0.3s ease, background-color 0.3s ease;
+        }
 
-        <h3 className="text-lg font-semibold mt-4">Assinatura</h3>
-        <SignatureCanvas ref={signatureRef} penColor="black" canvasProps={{ className: "border w-full h-24 bg-gray-200"
-            }} />
-        <Button onClick={clearSignature} className="mt-2">Limpar Assinatura</Button>
+        input:focus,
+        button:focus,
+        #uploadFoto:focus,
+        #btnTirarFoto:focus {
+            border: 1px solid #4CAF50;
+            outline: none;
+        }
 
-        <h3 className="text-lg font-semibold mt-4">Foto</h3>
-        <input type="file" accept="image/*" ref={fileInputRef} onChange={handlePhotoUpload}
-            className="w-full p-2 border rounded mb-2" />
-        {photo && <img src={photo} alt="Foto" className="mt-2 w-32 h-32 object-cover border" />}
+        input.error,
+        button.error {
+            border: 1px solid red;
+        }
+
+        button,
+        .whatsapp-btn {
+            background-color: #4CAF50;
+            color: white;
+            cursor: pointer;
+            border: none;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover,
+        .whatsapp-btn:hover {
+            background-color: #45a049;
+        }
+
+        .foto-preview {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            margin-top: 20px;
+            border-radius: 10px;
+            border: 2px solid #ddd;
+            display: none;
+        }
+
+        canvas {
+            border: 1px solid #ccc;
+            margin-top: 20px;
+            border-radius: 8px;
+        }
+
+        .whatsapp-btn {
+            background-color: #25D366;
+            padding: 12px;
+            border-radius: 8px;
+            text-decoration: none;
+            display: block;
+            margin-top: 20px;
+        }
+
+        .whatsapp-btn:hover {
+            background-color: #128C7E;
+        }
+
+        .photo-container {
+            position: relative;
+            margin-top: 20px;
+        }
+
+        .photo-container video {
+            width: 100%;
+            height: 250px;
+            border-radius: 10px;
+            background-color: #f0f0f0;
+        }
+
+        .signature-container {
+            margin-top: 20px;
+        }
+
+        .signature-container canvas {
+            width: 100%;
+            height: 200px;
+            border: 1px solid #ccc;
+            background-color: #f9f9f9;
+        }
+
+        .signature-container button {
+            width: 48%;
+            margin-top: 10px;
+            display: inline-block;
+        }
+
+        .error-message {
+            color: red;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
+        .btn-cancel {
+            background-color: #dc3545;
+            color: white;
+            padding: 12px;
+            font-size: 16px;
+            border-radius: 10px;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .btn-cancel:hover {
+            background-color: #c82333;
+        }
+
+        .loading {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 20px;
+            color: #4CAF50;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <div class="header">Assinatura e Foto</div>
+
+        <h1>Formulário</h1>
+        <input type="text" id="nome" placeholder="Nome" required aria-label="Digite seu nome">
+        <div class="error-message" id="errorNome"></div>
+        <input type="text" id="cpf" placeholder="CPF" required aria-label="Digite seu CPF">
+        <div class="error-message" id="errorCpf"></div>
+        <input type="text" id="expositor" placeholder="Expositor" required aria-label="Digite o nome do expositor">
+        <div class="error-message" id="errorExpositor"></div>
+        <input type="text" id="rua" placeholder="Rua" required aria-label="Digite o nome da rua">
+        <div class="error-message" id="errorRua"></div>
+
+        <!-- Botão para tirar foto -->
+        <button id="btnTirarFoto">Tirar Foto</button>
+        <!-- Botões para cancelar ou tirar outra foto -->
+        <button id="btnCancelarFoto" style="display:none;">Cancelar Foto</button>
+        <button id="btnTirarOutraFoto" style="display:none;">Tirar Outra Foto</button>
+
+        <!-- Seção para mostrar a foto tirada -->
+        <div class="photo-container">
+            <video id="video" autoplay></video>
+            <canvas id="canvasFoto" style="display: none;"></canvas>
+            <img id="fotoPreview" class="foto-preview" />
+        </div>
+
+        <!-- Assinatura -->
+        <div class="signature-container">
+            <h3>Assine abaixo</h3>
+            <canvas id="assinaturaCanvas" width="400" height="200"></canvas>
+            <div>
+                <button id="btnConcluirAssinatura" class="btn-rounded">Concluir</button>
+                <button id="btnLimparAssinatura" class="btn-cancel">Limpar</button>
+            </div>
+        </div>
+
+        <!-- Botão de Enviar para WhatsApp -->
+        <div id="whatsappSection" style="display: none; margin-top: 20px;">
+            <a href="#" id="whatsappBtn" class="whatsapp-btn">Enviar para WhatsApp</a>
+        </div>
+
+        <div id="loading" class="loading">Enviando...</div>
     </div>
 
-    <Button onClick={handleCapture} className="bg-blue-500 text-white">Capturar</Button>
+    <script>
+        // Funções de JavaScript para manipulação do formulário, foto e assinatura
 
-    {image && (
-    <div className="mt-4">
-        <h3 className="text-lg font-semibold">Imagem Final</h3>
-        <img src={image} alt="Captura" className="border p-2" />
-    </div>
-    )}
-</div>
-);
-}
+        const video = document.getElementById('video');
+        const canvasFoto = document.getElementById('canvasFoto');
+        const fotoPreview = document.getElementById('fotoPreview');
+        const btnTirarFoto = document.getElementById('btnTirarFoto');
+        const btnCancelarFoto = document.getElementById('btnCancelarFoto');
+        const btnTirarOutraFoto = document.getElementById('btnTirarOutraFoto');
+        const whatsappSection = document.getElementById('whatsappSection');
+        const whatsappBtn = document.getElementById('whatsappBtn');
+        const loading = document.getElementById('loading');
+
+        // Função para iniciar a câmera
+        function iniciarCamera() {
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: 1280, height: 720 } })
+                    .then(function (stream) {
+                        video.srcObject = stream;
+                    })
+                    .catch(function (error) {
+                        console.error("Erro ao acessar a câmera: ", error);
+                    });
+            }
+        }
+
+        // Tirar foto
+        btnTirarFoto.addEventListener('click', function () {
+            const contexto = canvasFoto.getContext('2d');
+            contexto.drawImage(video, 0, 0, canvasFoto.width, canvasFoto.height);
+            fotoPreview.src = canvasFoto.toDataURL('image/png');
+            fotoPreview.style.display = 'block';
+
+            btnTirarFoto.style.display = 'none';
+            btnCancelarFoto.style.display = 'inline-block';
+            btnTirarOutraFoto.style.display = 'inline-block';
+        });
+
+        // Cancelar foto
+        btnCancelarFoto.addEventListener('click', function () {
+            fotoPreview.style.display = 'none';
+            btnCancelarFoto.style.display = 'none';
+            btnTirarOutraFoto.style.display = 'none';
+            btnTirarFoto.style.display = 'inline-block';
+        });
+
+        // Tirar outra foto
+        btnTirarOutraFoto.addEventListener('click', function () {
+            fotoPreview.style.display = 'none';
+            const contexto = canvasFoto.getContext('2d');
+            contexto.clearRect(0, 0, canvasFoto.width, canvasFoto.height);
+            btnTirarFoto.style.display = 'inline-block';
+            btnCancelarFoto.style.display = 'none';
+            btnTirarOutraFoto.style.display = 'none';
+        });
+
+        // Concluir assinatura
+        const assinaturaCanvas = document.getElementById('assinaturaCanvas');
+        const contextoAssinatura = assinaturaCanvas.getContext('2d');
+        let isDrawing = false;
+
+        assinaturaCanvas.addEventListener('touchstart', (e) => {
+            isDrawing = true;
+            const rect = assinaturaCanvas.getBoundingClientRect();
+            contextoAssinatura.moveTo(e.touches[0].clientX - rect.left, e.touches[0].clientY - rect.top);
+        });
+
+        assinaturaCanvas.addEventListener('touchmove', (e) => {
+            if (isDrawing) {
+                const rect = assinaturaCanvas.getBoundingClientRect();
+                contextoAssinatura.lineTo(e.touches[0].clientX - rect.left, e.touches[0].clientY - rect.top);
+                contextoAssinatura.stroke();
+            }
+        });
+
+        assinaturaCanvas.addEventListener('touchend', () => {
+            isDrawing = false;
+        });
+
+        // Função para finalizar a assinatura
+        document.getElementById('btnConcluirAssinatura').addEventListener('click', function () {
+            const assinaturaData = assinaturaCanvas.toDataURL();
+            whatsappSection.style.display = 'block';
+            whatsappBtn.href = `https://wa.me/?text=Assinatura%20e%20foto%20anexados%20aqui.%20%0A${encodeURIComponent(assinaturaData)}`;
+        });
+
+        // Limpar assinatura
+        document.getElementById('btnLimparAssinatura').addEventListener('click', function () {
+            contextoAssinatura.clearRect(0, 0, assinaturaCanvas.width, assinaturaCanvas.height);
+        });
+
+        iniciarCamera(); // Inicia a câmera assim que a página é carregada
+    </script>
+
+</body>
+
+</html>
