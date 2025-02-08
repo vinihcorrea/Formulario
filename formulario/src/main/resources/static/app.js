@@ -129,10 +129,8 @@ function enviarDados() {
     }
 
     // Verifica se há algo desenhado no canvas (assinatura)
-    const assinaturaBase64 = assinaturaCanvas.toDataURL("image/png").length > 100 ?
-        assinaturaCanvas.toDataURL("image/png") : null;
-    const fotoBase64 = fotoCanvas.toDataURL("image/png").length > 100 ?
-        fotoCanvas.toDataURL("image/png") : null;
+    const assinaturaBase64 = assinaturaCanvas.toDataURL("image/png").length > 100 ? assinaturaCanvas.toDataURL("image/png") : null;
+    const fotoBase64 = fotoCanvas.toDataURL("image/png").length > 100 ? fotoCanvas.toDataURL("image/png") : null;
 
     // Validação para assinatura e foto
     if (!assinaturaBase64 || !fotoBase64) {
